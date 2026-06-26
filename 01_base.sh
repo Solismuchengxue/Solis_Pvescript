@@ -35,16 +35,12 @@ setup_sources(){
   msg_info "配置 APT 源（deb822，镜像=$MIRROR，suite=$SUITE）"
   local d=/etc/apt/sources.list.d f
 
-  # 1a. 禁用企业源（pve + ceph）：deb822 加 Enabled: false
+  # 1a. 禁用企业源（pve + ceph）：改名 .disabled（apt 只读 .sources 后缀，改名即忽略）
+  #     不往 deb822 里追加 Enabled: false —— 追加易带空行 → 残缺 stanza → apt 报 Malformed
   for f in "$d/pve-enterprise.sources" "$d/ceph.sources"; do
     [[ -f "$f" ]] || continue
-    backup_once "$f"
-    if grep -q '^Enabled:' "$f"; then
-      sed -i 's/^Enabled:.*/Enabled: false/' "$f"
-    else
-      printf '\nEnabled: false\n' >> "$f"
-    fi
-    msg_ok "已禁用企业源：$(basename "$f")"
+    mv "$f" "$f.disabled"
+    msg_ok "已禁用企业源：$(basename "$f") → .disabled"
   done
 
   # 1b. Debian 本体源
@@ -91,9 +87,10 @@ remove_subscription_nag(){
   sed -i "s/data.status.toLowerCase() !== 'active'/false/g" "$js" || true
   # apt 升级覆盖后自动重打补丁
   cat > /etc/apt/apt.conf.d/no-nag-script <<'EOF'
-DPkg::Post-Invoke { "dpkg -V proxmox-widget-toolkit | grep -q '/proxmoxlib\.js$'; if [ $? -eq 1 ]; then { echo 'Patching subscription nag...'; sed -i \"s/data.status.toLowerCase() !== 'active'/false/g\" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js; }; fi"; };
+DPkg::Post-Invoke { "dpkg -V proxmox-widget-toolkit | grep -q '/proxmoxlib\.js$'; if [ $? -eq 1 ]; then { echo 'Patching subscription nag...'; sed -i 's/data.status.toLowerCase() !== .active./false/g' /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js; }; fi"; };
 EOF
-  systemctl restart pveproxy.service 2>/dev/null || true
+  # --no-block：不等待 pveproxy 优雅重启完成（浏览器开着管理页时它会等连接超时，易误判“卡住”）
+  systemctl --no-block restart pveproxy.service 2>/dev/null || true
   msg_ok "已移除订阅弹窗（并设置升级后自动重打）"
 }
 
