@@ -29,6 +29,17 @@
 | `08_vm_attach.sh` | 交互式给 VM 挂 vGPU（含 VMID/类型/实例数校验） | ✅ |
 | `setup.sh` | 总入口菜单，逐项调用上述模块 | ✅ |
 
+## 部署进度
+
+> 脚本已全部完成；当前卡在 NVIDIA 驱动获取（外部依赖，等审核）。
+
+- [x] 脚本 v1 全部完成（`lib` + `01~08` + `setup`）
+- [x] P4 硬件验证：Win11 + GPU-Z 确认为标准卡、可识别
+- [x] NVIDIA vGPU 90 天评估申请已提交（2026-06-26，等审核邮件 24~48 工作小时）
+- [ ] 收到邮件 → 下 16.x KVM 包 → host `.run` 放 `drivers/`
+- [ ] 部署 `01~04` + 重启（**不依赖驱动，可在等邮件期间先做**）
+- [ ] 驱动到手 → `05~08` 跑通 → 多 VM 共享
+
 ## 用法
 
 ```bash
@@ -69,6 +80,34 @@ cd /root/Solis_Pvescript && chmod +x *.sh
 - **04 之后必须重启**，IOMMU / nouveau 黑名单 / 内核 pin 才生效。
 - **05 装完驱动**建议重启，确认 `nvidia-smi` 正常、`nvidia-vgpud` 已运行。
 - 也可 `./setup.sh` 走菜单逐项执行。
+- **两阶段部署**：`01~04` 不依赖 GPU 驱动，可在等评估邮件期间先跑通（含 04 后重启）；驱动到手后再从 `05` 开始。
+
+## vGPU 驱动与 License（关键路径）
+
+vGPU host 驱动是 NVIDIA **专有**软件，无开源替代（nouveau 不支持 mdev 切分）。驱动获取与授权是本项目最容易卡的环节。
+
+### 驱动获取：90 天评估（合法免费）
+
+| 项 | 说明 |
+|----|------|
+| 申请入口 | [NVIDIA vGPU 评估注册](https://enterpriseproductregistration.nvidia.com/?LicType=EVAL&ProductFamily=vGPU) |
+| ⚠️ 邮箱门槛 | **必须企业/域名邮箱**；个人邮箱（Gmail/Outlook/QQ）会被拒。可用自有域名邮箱（[腾讯企业邮基础版](https://exmail.qq.com/) 免费，绑自己域名，开通后用 `name@你的域名` 注册） |
+| 版本 | 选 **vGPU 16.x（= 535 驱动）**，hypervisor 选 **Linux KVM**（PVE 即 KVM，无 Proxmox 选项） |
+| 取件 | host `*-vgpu-kvm.run` → `drivers/`（给 05）；guest 驱动 → 装进 VM |
+
+详细步骤见 [drivers/README.md](drivers/README.md)。
+
+### License：自建 DLS，不被 90 天卡住
+
+- 评估的 **90 天限制的是 license，不是驱动**；驱动一旦下到手就一直能装能用。
+- guest 满速所需 license **全程走 `07` 自建的 fastapi-dls**，长期有效，连 NVIDIA license server 都不用碰。
+- host 与 guest 驱动**必须同分支**（都 16.x/535）。
+
+### 完整闭环
+
+```text
+评估账号 → 下 16.x KVM 包 → host .run(05) → guest 驱动 → 07 自建 DLS 发 token → guest Licensed → 多 VM 共享
+```
 
 ## ⚠️ 重要：行尾必须是 LF
 
@@ -92,3 +131,5 @@ sed -i 's/\r$//' *.sh lib/*.sh
 - 面向 **PVE 9.x（Debian 13 Trixie）**，APT 源为 deb822 格式，与 8.x 不通用。
 - P4 走 **vGPU(mdev)** 时**不要**绑 `vfio-pci`；`vfio-pci` 仅用于整卡直通给单个 VM，二者互斥。
 - P4 是 Pascal，vGPU 驱动建议 **16.x(535) 分支**；host 与 guest 驱动必须同代。
+- 本卡为**标准正品 P4**：device `10de:1bb3` / subsystem `10de:11d8`，vBIOS 未魔改。
+- P4 出厂 **ECC 默认开启**（显存 7680/8192M）；跑 vGPU 前用 `nvidia-smi -e 0` 关闭并重启，释放完整 8G（`06` 会自动检测询问）。
