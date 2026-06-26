@@ -65,10 +65,30 @@ gen_certs(){
   msg_ok "证书就绪：$c"
 }
 
+pull_image(){
+  # 国内 Docker Hub 不可直连，依次尝试各镜像前缀
+  local prefixes=("docker.m.daocloud.io/" "")
+  for prefix in "${prefixes[@]}"; do
+    local img="${prefix}${IMAGE}"
+    msg_info "拉取镜像：$img"
+    if docker pull "$img" 2>/dev/null; then
+      [[ -z "$prefix" ]] || docker tag "$img" "$IMAGE" 2>/dev/null || true
+      msg_ok "镜像拉取成功"
+      return 0
+    fi
+    msg_warn "失败，换下一个源..."
+  done
+  die "所有镜像源均失败。可在 Windows/Mac 上拉好后传入：
+  docker save ${IMAGE} | gzip > fastapi-dls.tar.gz
+  scp fastapi-dls.tar.gz root@${DLS_IP}:/tmp/
+  docker load < /tmp/fastapi-dls.tar.gz"
+}
+
 run_dls(){
   msg_info "启动 fastapi-dls（${DLS_IP}:${DLS_PORT}，租约 ${LEASE_DAYS} 天）"
   docker rm -f fastapi-dls >/dev/null 2>&1 || true
   docker volume create dls-db >/dev/null 2>&1 || true
+  docker image inspect "$IMAGE" >/dev/null 2>&1 || pull_image
   docker run -d --name fastapi-dls --restart=always \
     -e TZ="$TZ_" \
     -e DLS_URL="$DLS_IP" \
