@@ -25,7 +25,7 @@ VM_NAME="${VM_NAME:-fnos}"
 VM_CORES="${VM_CORES:-2}"
 VM_MEM="${VM_MEM:-4096}"
 SYS_DISK_GB="${SYS_DISK_GB:-40}"
-STORAGE="${STORAGE:-local-lvm}"
+STORAGE="${STORAGE:-local}"
 STORAGE_DEV="${STORAGE_DEV:-/dev/nvme1n1}"
 ISO_DIR="/var/lib/vz/template/iso"
 
@@ -78,7 +78,7 @@ create_vm(){
 
   qm set "$VMID" \
     --efidisk0 "${STORAGE}:0,efitype=4m,pre-enrolled-keys=0" \
-    --scsi0    "${STORAGE}:${SYS_DISK_GB},discard=on,ssd=1" \
+    --scsi0    "${STORAGE}:${SYS_DISK_GB},format=qcow2" \
     --scsi1    "${STORAGE_DEV},format=raw,backup=0" \
     --ide2     "${iso_ref},media=cdrom" \
     --boot     "order=ide2;scsi0" \
