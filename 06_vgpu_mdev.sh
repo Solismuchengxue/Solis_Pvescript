@@ -66,11 +66,26 @@ show_status(){
   fi
 }
 
+# ---- ECC：vGPU 建议关闭以释放完整显存（P4 开 ECC 时显存 8192→约7680M）----
+manage_ecc(){
+  command -v nvidia-smi >/dev/null 2>&1 || return 0
+  local ecc
+  ecc="$(nvidia-smi --query-gpu=ecc.mode.current --format=csv,noheader 2>/dev/null | head -1)"
+  msg_info "当前 ECC 状态：${ecc:-未知}"
+  if echo "${ecc:-}" | grep -qi 'Enabled'; then
+    msg_warn "ECC 开启占用约 1/16 显存，vGPU 建议关闭（否则 8Q 等大 profile 切不出来）"
+    if [[ "${DISABLE_ECC:-0}" == "1" ]] || confirm "现在关闭 ECC?（nvidia-smi -e 0，需重启生效）"; then
+      nvidia-smi -e 0 && msg_ok "已请求关闭 ECC，【重启后】生效" || msg_warn "关闭 ECC 失败"
+    fi
+  fi
+}
+
 main(){
   need_root
   need_pve9
   msg_info "===== 06 vGPU 服务/mdev 管理 ====="
   ensure_services
+  manage_ecc
   echo
   list_mdev_types
   show_status
