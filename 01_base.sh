@@ -89,9 +89,7 @@ remove_subscription_nag(){
   cat > /etc/apt/apt.conf.d/no-nag-script <<'EOF'
 DPkg::Post-Invoke { "dpkg -V proxmox-widget-toolkit | grep -q '/proxmoxlib\.js$'; if [ $? -eq 1 ]; then { echo 'Patching subscription nag...'; sed -i 's/data.status.toLowerCase() !== .active./false/g' /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js; }; fi"; };
 EOF
-  # --no-block：不等待 pveproxy 优雅重启完成（浏览器开着管理页时它会等连接超时，易误判“卡住”）
-  systemctl --no-block restart pveproxy.service 2>/dev/null || true
-  msg_ok "已移除订阅弹窗（并设置升级后自动重打）"
+  msg_ok “已移除订阅弹窗（并设置升级后自动重打）”
 }
 
 # ---- 3. 时区 ----
@@ -156,5 +154,7 @@ main(){
   update_and_pkgs
   msg_ok "===== 01 基础配置完成 ====="
   msg_warn "升级内核前请先完成 04/05（IOMMU 与 vGPU 驱动）并 pin 内核，避免驱动被新内核搞挂"
+  msg_info "重启 pveproxy（浏览器控制台会短暂断线，刷新页面即可）..."
+  systemctl --no-block restart pveproxy.service 2>/dev/null || true
 }
 main "$@"
