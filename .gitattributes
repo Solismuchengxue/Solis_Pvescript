@@ -1,0 +1,11 @@
+# 这些脚本部署到 PVE/Linux 运行：强制文本文件以 LF 存储与检出，
+# 避免 Windows 上 CRLF 混入导致 bash 报 $'\r': command not found
+* text=auto eol=lf
+
+# 明确 shell 脚本为 LF
+*.sh text eol=lf
+
+# 二进制/驱动不做行尾与 diff 处理
+*.run binary
+*.zip binary
+*.pem binary

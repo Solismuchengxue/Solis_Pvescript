@@ -1,0 +1,21 @@
+# NVIDIA vGPU 驱动：体积大且涉及授权，勿入库（保留说明文件）
+drivers/*
+!drivers/README.md
+
+# DLS 本地证书/私钥（若 DLS_DIR 指向项目内时，避免泄露）
+cert/
+*.pem
+*.key
+*.crt
+
+# 脚本运行时产生的系统文件备份（通常不在仓库内，保险起见）
+*.orig
+*.bak
+*.log
+
+# 编辑器 / 操作系统
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
