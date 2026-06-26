@@ -133,7 +133,12 @@ main(){
   msg_info "  1. PVE Web UI → VM ${VMID} → 启动 → Console"
   msg_info "  2. 飞牛安装向导：系统盘选 ${SYS_DISK_GB}G SSD（scsi0）"
   msg_warn "     NVMe 存储盘（${dev_size}）安装时不要动，飞牛启动后在存储管理里挂载"
-  msg_info "  3. 安装完毕关机 → 硬件 → CD-ROM → 移除 ISO → 再开机"
+  msg_info "  3. 安装完毕后，执行以下命令移除 ISO 并调整启动顺序："
+  echo
+  echo "    qm set ${VMID} --ide2 none,media=cdrom"
+  echo "    qm set ${VMID} --boot 'order=scsi0'"
+  echo "    qm reboot ${VMID}"
+  echo
   msg_info "  4. 浏览器访问 http://<飞牛IP>:5666 完成初始化向导"
 }
 main "$@"
