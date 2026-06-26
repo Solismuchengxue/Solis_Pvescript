@@ -24,12 +24,31 @@ IMAGE="${IMAGE:-collinwebdesigns/fastapi-dls:latest}"
 DLS_IP="${DLS_IP:-$(ip route get 1.1.1.1 2>/dev/null | sed -n 's/.*src \([0-9.]\+\).*/\1/p' | head -1)}"
 
 ensure_docker(){
-  if command -v docker >/dev/null 2>&1; then msg_info "docker 已安装"; return 0; fi
-  msg_info "安装 docker.io ..."
-  apt-get update
-  DEBIAN_FRONTEND=noninteractive apt-get -y install docker.io
-  systemctl enable --now docker
-  msg_ok "docker 安装完成"
+  if ! command -v docker >/dev/null 2>&1; then
+    msg_info "安装 docker.io ..."
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get -y install docker.io
+    systemctl enable --now docker
+    msg_ok "docker 安装完成"
+  else
+    msg_info "docker 已安装"
+  fi
+  # 配置国内镜像加速（Docker Hub 在中国大陆被墙）
+  local cfg=/etc/docker/daemon.json
+  if [[ ! -f "$cfg" ]] || ! grep -q 'registry-mirrors' "$cfg" 2>/dev/null; then
+    msg_info "配置 Docker 国内镜像加速..."
+    mkdir -p /etc/docker
+    cat > "$cfg" <<'DOCKEREOF'
+{
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://mirror.ccs.tencentyun.com"
+  ]
+}
+DOCKEREOF
+    systemctl restart docker
+    msg_ok "Docker 镜像加速已配置（DaoCloud + 腾讯云）"
+  fi
 }
 
 gen_certs(){
