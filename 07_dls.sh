@@ -33,12 +33,10 @@ ensure_docker(){
   else
     msg_info "docker 已安装"
   fi
-  # 配置国内镜像加速（Docker Hub 在中国大陆被墙）
-  local cfg=/etc/docker/daemon.json
-  if [[ ! -f "$cfg" ]] || ! grep -q 'registry-mirrors' "$cfg" 2>/dev/null; then
-    msg_info "配置 Docker 国内镜像加速..."
-    mkdir -p /etc/docker
-    cat > "$cfg" <<'DOCKEREOF'
+  # 始终覆盖写入最新镜像列表（国内镜像站变动频繁，每次确保生效）
+  msg_info "更新 Docker 国内镜像加速列表..."
+  mkdir -p /etc/docker
+  cat > /etc/docker/daemon.json <<'DOCKEREOF'
 {
   "registry-mirrors": [
     "https://docker-pull.ygxz.in",
@@ -53,9 +51,8 @@ ensure_docker(){
   ]
 }
 DOCKEREOF
-    systemctl restart docker
-    msg_ok "Docker 镜像加速已配置（DaoCloud + 腾讯云）"
-  fi
+  systemctl restart docker
+  msg_ok "Docker 镜像加速已配置（9 个国内源）"
 }
 
 gen_certs(){
@@ -73,22 +70,20 @@ gen_certs(){
 }
 
 pull_image(){
-  # 国内 Docker Hub 不可直连，依次尝试各镜像前缀
-  local prefixes=("docker.m.daocloud.io/" "")
-  for prefix in "${prefixes[@]}"; do
-    local img="${prefix}${IMAGE}"
-    msg_info "拉取镜像：$img"
-    if docker pull "$img" 2>/dev/null; then
-      [[ -z "$prefix" ]] || docker tag "$img" "$IMAGE" 2>/dev/null || true
-      msg_ok "镜像拉取成功"
-      return 0
-    fi
-    msg_warn "失败，换下一个源..."
-  done
-  die "所有镜像源均失败。可在 Windows/Mac 上拉好后传入：
+  # daemon.json 已配好镜像列表，直接 pull 即可（daemon 自动按序尝试各镜像站）
+  msg_info "拉取镜像：${IMAGE}（经 daemon 镜像加速）"
+  if docker pull "$IMAGE"; then
+    msg_ok "镜像拉取成功"
+    return 0
+  fi
+  die "镜像拉取失败，所有镜像站均不可用。离线方案：
+  # 在能访问 Docker Hub 的机器上：
+  docker pull ${IMAGE}
   docker save ${IMAGE} | gzip > fastapi-dls.tar.gz
   scp fastapi-dls.tar.gz root@${DLS_IP}:/tmp/
-  docker load < /tmp/fastapi-dls.tar.gz"
+  # PVE 上：
+  docker load < /tmp/fastapi-dls.tar.gz
+  ./07_dls.sh"
 }
 
 run_dls(){
