@@ -114,11 +114,41 @@ EOF
   msg_ok "已写入 vfio-pci 绑定（ids=$ids）"
 }
 
-# ---- pin 当前内核 ----
+# ---- pin 内核（含版本兼容检查：535/Pascal vGPU 不支持 6.15+ / 7.x）----
+# 兼容边界：6.14.x 需社区补丁；6.15+ / 7.x 直接无法编译，自动降到 6.14.4
+TARGET_COMPAT_KERNEL="6.14.4-1+deb13u1-pve"
 pin_current_kernel(){
   [[ "$PIN_KERNEL" == "1" ]] || { msg_info "PIN_KERNEL!=1，跳过内核 pin"; return 0; }
   command -v proxmox-boot-tool >/dev/null 2>&1 || { msg_warn "无 proxmox-boot-tool，跳过 pin"; return 0; }
-  local kv; kv="$(uname -r)"
+
+  local kv kmaj kmin
+  kv="$(uname -r)"
+  kmaj="$(echo "$kv" | cut -d. -f1)"
+  kmin="$(echo "$kv" | cut -d. -f2)"
+
+  if (( kmaj >= 7 )) || (( kmaj == 6 && kmin >= 15 )); then
+    msg_warn "当前内核 $kv 不兼容 NVIDIA 535 vGPU（Pascal 最高支持 16.x/535，不支持 6.15+ / 7.x）"
+    msg_warn "将安装并切换到：proxmox-kernel-${TARGET_COMPAT_KERNEL}"
+    if [[ "$DRY_RUN" == "1" ]]; then
+      msg_info "[DRY_RUN] apt install proxmox-kernel-${TARGET_COMPAT_KERNEL}"
+      msg_info "[DRY_RUN] proxmox-boot-tool kernel pin ${TARGET_COMPAT_KERNEL}"
+      return 0
+    fi
+    if confirm "自动安装 proxmox-kernel-${TARGET_COMPAT_KERNEL} 并 pin（重启后生效）?"; then
+      DEBIAN_FRONTEND=noninteractive apt-get -y install "proxmox-kernel-${TARGET_COMPAT_KERNEL}"
+      proxmox-boot-tool kernel pin "${TARGET_COMPAT_KERNEL}" \
+        && msg_ok "已安装并 pin ${TARGET_COMPAT_KERNEL}；重启后将以该内核运行" \
+        || msg_warn "pin 失败，请手动：proxmox-boot-tool kernel pin ${TARGET_COMPAT_KERNEL}"
+    else
+      msg_warn "未切换内核，05 安装驱动时将因内核版本失败"
+    fi
+    return 0
+  fi
+
+  if (( kmaj == 6 && kmin == 14 )); then
+    msg_info "内核 $kv（6.14.x）：535 需社区补丁，05 安装时会提示"
+  fi
+
   if [[ "$DRY_RUN" == "1" ]]; then msg_info "[DRY_RUN] proxmox-boot-tool kernel pin $kv"; return 0; fi
   proxmox-boot-tool kernel pin "$kv" && msg_ok "已 pin 内核 $kv" \
     || msg_warn "pin 内核失败（确认 $kv 在 proxmox-boot-tool kernel list 中）"

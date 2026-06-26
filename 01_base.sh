@@ -128,7 +128,25 @@ EOF
   fi
 }
 
-# ---- 5. 更新 + 基础包 ----
+# ---- 5. 系统语言（zh_CN.UTF-8）----
+setup_locale(){
+  msg_info "配置系统语言：zh_CN.UTF-8"
+  # locales 包通常已装；apt cache 在 update_and_pkgs 前可能未刷新，用 || true 兜底
+  DEBIAN_FRONTEND=noninteractive apt-get -y install locales 2>/dev/null || true
+  # 幂等：去掉注释行的 #；若行不存在则追加
+  if grep -q 'zh_CN\.UTF-8' /etc/locale.gen 2>/dev/null; then
+    sed -i 's/^#[[:space:]]*\(zh_CN\.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+  else
+    echo 'zh_CN.UTF-8 UTF-8' >> /etc/locale.gen
+  fi
+  # 保留 en_US.UTF-8 作为 fallback
+  sed -i 's/^#[[:space:]]*\(en_US\.UTF-8 UTF-8\)/\1/' /etc/locale.gen 2>/dev/null || true
+  locale-gen
+  update-locale LANG=zh_CN.UTF-8
+  msg_ok "系统语言已设置为 zh_CN.UTF-8（重新登录终端后生效）"
+}
+
+# ---- 6. 更新 + 基础包 ----
 update_and_pkgs(){
   msg_info "apt update ..."
   apt-get update
@@ -152,6 +170,7 @@ main(){
   setup_timezone
   setup_ntp
   update_and_pkgs
+  setup_locale
   msg_ok "===== 01 基础配置完成 ====="
   msg_warn "升级内核前请先完成 04/05（IOMMU 与 vGPU 驱动）并 pin 内核，避免驱动被新内核搞挂"
   msg_info "重启 pveproxy（浏览器控制台会短暂断线，刷新页面即可）..."

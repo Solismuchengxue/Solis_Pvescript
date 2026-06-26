@@ -65,12 +65,22 @@ install_deps(){
   msg_ok "依赖安装完成"
 }
 
-# ---- 新内核兼容性提示 ----
+# ---- 内核兼容性检查（535/Pascal vGPU）----
 kernel_compat_note(){
-  local kmaj kmin; kmaj="$(uname -r | cut -d. -f1)"; kmin="$(uname -r | cut -d. -f2)"
-  if (( kmaj > 6 || (kmaj == 6 && kmin >= 8) )); then
-    msg_warn "当前内核 $(uname -r) 较新：535/16.x 驱动可能需内核补丁才能编译。"
-    msg_warn "若下方安装因 DKMS 编译报错失败，请把内核版本+驱动版本告诉我，再做针对性 patch。"
+  local kv kmaj kmin
+  kv="$(uname -r)"
+  kmaj="$(echo "$kv" | cut -d. -f1)"
+  kmin="$(echo "$kv" | cut -d. -f2)"
+
+  if (( kmaj >= 7 )) || (( kmaj == 6 && kmin >= 15 )); then
+    die "内核 $kv 不支持 NVIDIA 535 vGPU！请先降至 6.14.4：
+  apt install proxmox-kernel-6.14.4-1+deb13u1-pve
+  proxmox-boot-tool kernel pin 6.14.4-1+deb13u1-pve
+  reboot
+（或重跑 04_iommu.sh，它会自动安装并切换）"
+  elif (( kmaj == 6 && kmin == 14 )); then
+    msg_warn "内核 $kv（6.14.x）：535 不能直接编译，需社区补丁。"
+    msg_warn "下方若 DKMS 编译失败，把 /var/log/nvidia-installer.log 末尾报错贴出来，我给精确 patch。"
   fi
 }
 
