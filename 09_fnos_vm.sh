@@ -100,8 +100,9 @@ create_vm(){
     --scsi0    "${STORAGE}:${SYS_DISK_GB},format=qcow2,ssd=1" \
     --hostpci0 "${pci},pcie=1" \
     --ide2     "${iso_ref},media=cdrom" \
-    --boot     "order=ide2;scsi0" \
     --onboot   1
+  # 启动顺序最后单独设置，覆盖 qm create 自动加入的 net0
+  qm set "$VMID" --boot "order=ide2;scsi0"
 
   msg_ok "VM ${VMID} 创建完成"
 }
