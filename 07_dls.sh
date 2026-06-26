@@ -41,8 +41,15 @@ ensure_docker(){
     cat > "$cfg" <<'DOCKEREOF'
 {
   "registry-mirrors": [
+    "https://docker-pull.ygxz.in",
+    "https://xuanyuan.me",
     "https://docker.m.daocloud.io",
-    "https://mirror.ccs.tencentyun.com"
+    "https://docker.imgdb.de",
+    "https://docker-0.unsee.tech",
+    "https://docker.hlmirror.com",
+    "https://docker.1ms.run",
+    "https://func.ink",
+    "https://lispy.org"
   ]
 }
 DOCKEREOF
