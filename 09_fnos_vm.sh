@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 09_fnos_vm.sh —— 创建飞牛OS (FnOS) VM
-#   系统盘：local 虚拟磁盘（默认 40G，qcow2，标记 SSD）
+#   系统盘：local 虚拟磁盘（默认 64G，qcow2，标记 SSD）
 #   存储盘：NVMe PCIe 直通（hostpci0）—— guest 看到真实 NVMe 控制器，
 #           数据格式由飞牛管理，拔盘可在任意机器直接读取
 #   网络  ：vmbr0（SLAAC 自动获取 IPv4 + IPv6）
@@ -13,7 +13,7 @@
 #   VMID=100                   VM ID（默认 100）
 #   VM_CORES=2                 CPU 核数
 #   VM_MEM=4096                内存 MB
-#   SYS_DISK_GB=40             系统盘大小 GB（存放在 STORAGE）
+#   SYS_DISK_GB=64             系统盘大小 GB（存放在 STORAGE）
 #   STORAGE=local              PVE 存储池
 #   STORAGE_DEV=/dev/nvme1n1   存储盘块设备（自动转为 PCI 地址做直通）
 #   PCI_ADDR=                  手动指定 PCI 地址（留空则从 STORAGE_DEV 自动探测）
@@ -130,7 +130,7 @@ main(){
   msg_ok "===== 09 完成 ====="
   msg_info "启动与安装步骤："
   msg_info "  1. PVE Web UI → VM ${VMID} → 启动 → Console"
-  msg_info "  2. 飞牛安装向导：系统盘选 40G SSD（scsi0）"
+  msg_info "  2. 飞牛安装向导：系统盘选 ${SYS_DISK_GB}G SSD（scsi0）"
   msg_warn "     NVMe 存储盘（${dev_size}）安装时不要动，飞牛启动后在存储管理里挂载"
   msg_info "  3. 安装完毕关机 → 硬件 → CD-ROM → 移除 ISO → 再开机"
   msg_info "  4. 浏览器访问 http://<飞牛IP>:5666 完成初始化向导"
