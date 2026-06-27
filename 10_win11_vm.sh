@@ -80,7 +80,7 @@ create_vm(){
 
   qm set "$VMID" \
     --efidisk0  "${STORAGE}:0,efitype=4m,pre-enrolled-keys=1" \
-    --tpmstate0 "${STORAGE}:1,version=2.0" \
+    --tpmstate0 "${STORAGE}:1,version=v2.0" \
     --scsi0     "${STORAGE}:${SYS_DISK_GB},format=qcow2,ssd=1,discard=on,iothread=1" \
     --ide2      "${win_ref},media=cdrom" \
     --ide3      "${virtio_ref},media=cdrom" \
