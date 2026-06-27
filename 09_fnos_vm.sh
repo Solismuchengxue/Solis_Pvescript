@@ -11,7 +11,7 @@
 #
 # 环境变量：
 #   VMID=100                   VM ID（默认 100）
-#   VM_CORES=2                 CPU 核数
+#   VM_CORES=4                 CPU 核数
 #   VM_MEM=4096                内存 MB
 #   SYS_DISK_GB=64             系统盘大小 GB（存放在 STORAGE）
 #   STORAGE=local              PVE 存储池
@@ -23,7 +23,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 
 VMID="${VMID:-100}"
 VM_NAME="${VM_NAME:-fnos}"
-VM_CORES="${VM_CORES:-2}"
+VM_CORES="${VM_CORES:-4}"
 VM_MEM="${VM_MEM:-4096}"
 SYS_DISK_GB="${SYS_DISK_GB:-64}"
 STORAGE="${STORAGE:-local}"
