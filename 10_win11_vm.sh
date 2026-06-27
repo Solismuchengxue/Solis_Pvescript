@@ -13,7 +13,7 @@
 #   VMID=110               VM ID（默认 110）
 #   VM_CORES=4             CPU 核数
 #   VM_MEM=8192            内存 MB
-#   SYS_DISK_GB=64         系统盘大小 GB
+#   SYS_DISK_GB=128        系统盘大小 GB
 #   STORAGE=local          PVE 存储池
 #   WIN_ISO=               Win11 ISO 路径（留空自动探测 *win11* / *Win*11*）
 #   VIRTIO_ISO=            virtio-win ISO 路径（留空自动探测 virtio-win*.iso）
@@ -25,7 +25,7 @@ VMID="${VMID:-110}"
 VM_NAME="${VM_NAME:-win11}"
 VM_CORES="${VM_CORES:-4}"
 VM_MEM="${VM_MEM:-8192}"
-SYS_DISK_GB="${SYS_DISK_GB:-64}"
+SYS_DISK_GB="${SYS_DISK_GB:-128}"
 STORAGE="${STORAGE:-local}"
 WIN_ISO="${WIN_ISO:-}"
 VIRTIO_ISO="${VIRTIO_ISO:-}"
