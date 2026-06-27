@@ -111,17 +111,23 @@ main(){
   msg_info "  1. PVE Web UI → VM ${VMID} → 启动 → Console"
   msg_info "  2. 装到「选择安装位置」看不到磁盘 → 点【加载驱动程序】"
   msg_info "     → 浏览 virtio CD → vioscsi\\w11\\amd64 → 装好后磁盘出现"
-  msg_info "  3. 装完进桌面 → 打开 virtio CD → 运行 virtio-win-guest-tools.exe"
-  msg_info "     （一次装齐网卡 / QEMU Agent / Balloon 驱动）"
-  msg_info "  4. 安装完成后移除 ISO 并改启动顺序："
+  msg_info "  3. 走到「让我们为你连接到网络」时（VirtIO 网卡此时无驱动，先跳过联网）："
+  msg_info "     按 Shift+F10 调出命令行 → 输入下面命令 → 回车后自动重启："
+  echo
+  echo "       OOBE\\BYPASSNRO"
+  echo
+  msg_info "     重启回到网络步骤 → 选「我没有 Internet 连接」→ 继续建本地账户"
+  msg_warn "     若 25H2 上 BYPASSNRO 失效，改用：Shift+F10 → start ms-cxh:localonly"
+  msg_info "  4. 装完进桌面 → 打开 virtio CD → 运行 virtio-win-guest-tools.exe"
+  msg_info "     （一次装齐网卡 / QEMU Agent / Balloon 驱动，装完网络即通）"
+  msg_info "  5. 安装完成后移除 ISO 并改启动顺序："
   echo
   echo "    qm set ${VMID} --ide2 none,media=cdrom"
   echo "    qm set ${VMID} --ide3 none,media=cdrom"
   echo "    qm set ${VMID} --boot 'order=scsi0'"
   echo "    qm reboot ${VMID}"
   echo
-  msg_info "  5. 激活：见 docs/win11-kms-activation.md（飞牛自建 KMS）"
-  msg_info "  6. vGPU：驱动就绪后用 08_vm_attach.sh 挂 P4，再把显示切为 none"
-  msg_warn "提示：Win11 安装时若强制联网登录微软账号，按 Shift+F10 输入 OOBE\\BYPASSNRO 可跳过"
+  msg_info "  6. 激活：见 docs/win11-kms-activation.md（飞牛自建 KMS）"
+  msg_info "  7. vGPU：驱动就绪后用 08_vm_attach.sh 挂 P4，再把显示切为 none"
 }
 main "$@"
