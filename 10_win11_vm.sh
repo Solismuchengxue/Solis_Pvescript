@@ -5,7 +5,8 @@
 #   显示先用默认 std；驱动装好后用 08_vm_attach.sh 挂 P4 vGPU 再切 none
 #
 # 前置：两个 ISO 都放入 /var/lib/vz/template/iso/
-#   1) Windows 11 ISO —— 必须是【批量授权版/Volume】才能用 KMS 激活（见 docs/win11-kms-activation.md）
+#   1) Windows 11 ISO —— 消费版/零售版均可（如 Win11_25H2_Pro_*.iso）；
+#      KMS 激活靠安装后的 GVLK，与 ISO 渠道无关（见 docs/win11-kms-activation.md）
 #   2) virtio-win ISO —— https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso
 #
 # 环境变量：
@@ -35,8 +36,7 @@ find_win_iso(){
   [[ -n "$WIN_ISO" ]] && { echo "$WIN_ISO"; return 0; }
   local iso
   iso="$(ls -1 "${ISO_DIR}"/*[Ww]in*11*.iso "${ISO_DIR}"/*[Ww]in11*.iso 2>/dev/null | head -1 || true)"
-  [[ -n "$iso" ]] || die "未找到 Windows 11 ISO，请放入 ${ISO_DIR}/，或用 WIN_ISO=<路径> 指定
-  注意：KMS 激活需【批量授权版/Volume】镜像"
+  [[ -n "$iso" ]] || die "未找到 Windows 11 ISO，请放入 ${ISO_DIR}/，或用 WIN_ISO=<路径> 指定"
   echo "$iso"
 }
 
