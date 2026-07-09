@@ -97,8 +97,7 @@ run_dls(){
   docker rm -f fastapi-dls >/dev/null 2>&1 || true
   docker volume create dls-db >/dev/null 2>&1 || true
   docker image inspect "$IMAGE" >/dev/null 2>&1 || pull_image
-  docker run -d --name fastapi-dls --restart=always \
-    --cap-add SYS_ADMIN \
+  docker run -d --name fastapi-dls --restart=always --privileged \
     -e TZ="$TZ_" \
     -e DLS_URL="$DLS_IP" \
     -e DLS_PORT="$DLS_PORT" \
