@@ -87,11 +87,15 @@ pull_image(){
 }
 
 run_dls(){
+  if ss -tulpn | grep -q ":${DLS_PORT}\b"; then
+    die "端口 ${DLS_PORT} 已被占用，请设置 DLS_PORT 为其他值或释放该端口"
+  fi
   msg_info "启动 fastapi-dls（${DLS_IP}:${DLS_PORT}，租约 ${LEASE_DAYS} 天）"
   docker rm -f fastapi-dls >/dev/null 2>&1 || true
   docker volume create dls-db >/dev/null 2>&1 || true
   docker image inspect "$IMAGE" >/dev/null 2>&1 || pull_image
   docker run -d --name fastapi-dls --restart=always \
+    --cap-add SYS_ADMIN \
     -e TZ="$TZ_" \
     -e DLS_URL="$DLS_IP" \
     -e DLS_PORT="$DLS_PORT" \
