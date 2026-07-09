@@ -9,7 +9,7 @@
 #   直接运行则进入交互式。
 #
 # 环境变量：
-#   HOSTPCI_INDEX=0    对应 hostpci0/1/...
+#   HOSTPCI_INDEX=0    指定起始索引（默认0），若该索引被占用则自动递增。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/common.sh"
@@ -40,17 +40,36 @@ list_types(){
   done
 }
 
-# ---- 获取并校验 VMID ----
+# ---- 查找空闲的 hostpci 索引 ----
+find_free_hostpci(){
+  local idx=$1
+  local max_idx=9   # PVE 支持 hostpci0~9，可根据需要调整
+  while [[ $idx -le $max_idx ]]; do
+    if ! qm config "$VMID" | grep -q "^hostpci${idx}:"; then
+      echo "$idx"
+      return 0
+    fi
+    ((idx++))
+  done
+  die "VM $VMID 已占用所有 hostpci0~${max_idx}，无法添加新的 PCI 设备。"
+}
+
+# ---- 获取并校验 VMID，并自动分配空闲索引 ----
 resolve_vmid(){
   if [[ -z "$VMID" ]]; then
     read -r -p "请输入目标 VMID： " VMID
   fi
   [[ "$VMID" =~ ^[0-9]+$ ]] || die "VMID 非法：$VMID"
   qm config "$VMID" >/dev/null 2>&1 || die "VM $VMID 不存在"
-  # 已占用该 hostpci 槽则提示
+
+  # 如果用户指定的索引被占用，自动寻找下一个空闲索引
   if qm config "$VMID" | grep -q "^hostpci${HOSTPCI_INDEX}:"; then
-    msg_warn "VM $VMID 已存在 hostpci${HOSTPCI_INDEX}：$(qm config "$VMID" | grep "^hostpci${HOSTPCI_INDEX}:")"
-    confirm "覆盖该槽?" || die "已取消"
+    msg_warn "VM $VMID 已存在 hostpci${HOSTPCI_INDEX}，正在自动查找空闲索引..."
+    HOSTPCI_INDEX=$(find_free_hostpci $((HOSTPCI_INDEX + 1)))
+    msg_info "将使用空闲索引 hostpci${HOSTPCI_INDEX}"
+  else
+    # 指定的索引空闲，直接使用
+    msg_info "将使用 hostpci${HOSTPCI_INDEX}"
   fi
 }
 
