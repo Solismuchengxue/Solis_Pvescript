@@ -119,11 +119,16 @@ ${C_OK}==== guest 端 License 配置指引 ====${C_RESET}
 服务器地址： https://${DLS_IP}:${DLS_PORT}
 
 [Linux guest]
+  sudo tee /etc/nvidia/gridd.conf <<'GRIDDEOF'
+ServerAddress=${DLS_IP}
+FeatureType=2
+GRIDDEOF
   sudo mkdir -p /etc/nvidia/ClientConfigToken
   sudo curl --insecure -L -X GET https://${DLS_IP}:${DLS_PORT}/-/client-token \\
     -o /etc/nvidia/ClientConfigToken/client_configuration_token_\$(date '+%d-%m-%Y-%H-%M-%S').tok
   sudo systemctl restart nvidia-gridd
-  nvidia-smi -q | grep -i license    # 应显示 Licensed
+  nvidia-smi -q | grep -i license                    # 应显示 Licensed
+  nvidia-smi --query-gpu=compute_mode --format=csv    # 应为 Default，非 Prohibited
 
 [Windows guest]
   浏览器访问 https://${DLS_IP}:${DLS_PORT}/-/client-token 下载 .tok，放到：

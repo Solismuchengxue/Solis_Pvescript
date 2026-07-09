@@ -75,7 +75,13 @@ manage_ecc(){
   if echo "${ecc:-}" | grep -qi 'Enabled'; then
     msg_warn "ECC 开启占用约 1/16 显存，vGPU 建议关闭（否则 8Q 等大 profile 切不出来）"
     if [[ "${DISABLE_ECC:-0}" == "1" ]] || confirm "现在关闭 ECC?（nvidia-smi -e 0，需重启生效）"; then
-      nvidia-smi -e 0 && msg_ok "已请求关闭 ECC，【重启后】生效" || msg_warn "关闭 ECC 失败"
+      if nvidia-smi -e 0; then
+        msg_ok "已请求关闭 ECC，需【重启】才能真正生效"
+        msg_warn "ECC 关闭前查 mdev 类型必然为空（属预期），现在退出，重启后重新运行本脚本"
+        exit 0
+      else
+        msg_warn "关闭 ECC 失败"
+      fi
     fi
   fi
 }
