@@ -103,7 +103,6 @@ run_dls(){
     -e DLS_PORT="$DLS_PORT" \
     -e LEASE_EXPIRE_DAYS="$LEASE_DAYS" \
     -e DATABASE="sqlite:////app/database/db.sqlite" \
-    -e FEATURE_LICENSE_TYPE="Quadro-Virtual-DWS,5.0" \
     -p "${DLS_PORT}:443" \
     -v "$DLS_DIR/cert:/app/cert" \
     -v dls-db:/app/database \
