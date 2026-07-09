@@ -2,6 +2,9 @@
 drivers/*
 !drivers/README.md
 
+# 本地私有硬件设计笔记（未经实测验证的线序，不公开，避免他人照做损坏硬件）
+docs/m920x-sata-fpc-adapter.md
+
 # DLS 本地证书/私钥（若 DLS_DIR 指向项目内时，避免泄露）
 cert/
 *.pem
