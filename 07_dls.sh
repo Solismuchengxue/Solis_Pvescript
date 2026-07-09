@@ -119,9 +119,10 @@ ${C_OK}==== guest 端 License 配置指引 ====${C_RESET}
 服务器地址： https://${DLS_IP}:${DLS_PORT}
 
 [Linux guest]
-  curl --insecure -L -X GET https://${DLS_IP}:${DLS_PORT}/-/client-token \\
+  sudo mkdir -p /etc/nvidia/ClientConfigToken
+  sudo curl --insecure -L -X GET https://${DLS_IP}:${DLS_PORT}/-/client-token \\
     -o /etc/nvidia/ClientConfigToken/client_configuration_token_\$(date '+%d-%m-%Y-%H-%M-%S').tok
-  systemctl restart nvidia-gridd
+  sudo systemctl restart nvidia-gridd
   nvidia-smi -q | grep -i license    # 应显示 Licensed
 
 [Windows guest]
