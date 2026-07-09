@@ -87,8 +87,11 @@ pull_image(){
 }
 
 run_dls(){
+  # 先清理旧容器（无论是否存在）
+  docker rm -f fastapi-dls >/dev/null 2>&1 || true
+  # 然后再检测端口（此时旧容器已释放）
   if ss -tulpn | grep -q ":${DLS_PORT}\b"; then
-    die "端口 ${DLS_PORT} 已被占用，请设置 DLS_PORT 为其他值或释放该端口"
+      die "端口 ${DLS_PORT} 已被占用，请设置 DLS_PORT 为其他值或释放该端口"
   fi
   msg_info "启动 fastapi-dls（${DLS_IP}:${DLS_PORT}，租约 ${LEASE_DAYS} 天）"
   docker rm -f fastapi-dls >/dev/null 2>&1 || true
