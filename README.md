@@ -34,7 +34,7 @@
 
 ## 部署进度
 
-> **vGPU 全链路已跑通**：P4 driver 装好、License 自建生效、飞牛OS 与 Win11 均已挂载 vGPU 并通过 License 验证。
+> **vGPU 全链路已跑通**：飞牛OS 与 Win11 均已挂载 P4 vGPU(`nvidia-64`/2Q)，guest 驱动装好、License 验证为 `NVIDIA RTX Virtual Workstation`，两台 VM 共享同一张 P4（各占 2GB，卡内还剩 4GB/2 个槽位）。
 
 - [x] 脚本 v1~v2 全部完成（`lib` + `01~10` + `setup` + `drivers/fetch.sh`）
 - [x] NVIDIA vGPU 90 天评估获批，下载 **vGPU 16.14（535.309.01）Linux KVM** 完整包
@@ -42,10 +42,12 @@
 - [x] `05` host 驱动安装（535.309.01 × 内核 6.14.4，未打补丁直接编译通过）
 - [x] `06` vGPU 服务 + ECC 关闭（注意：ECC 关闭后需【重启】才生效，脚本已改为关闭后自动退出避免误判）
 - [x] `07` 自建 fastapi-dls License 服务器（Docker，Docker Hub 走国内镜像加速）
-- [x] `08` 挂载 vGPU：飞牛OS（GRID P4-2Q）+ Win11 均已挂载
-- [x] `09` 飞牛OS VM：系统盘 + 数据盘（KIOXIA NVMe）PCIe 直通，飞牛数据完全独立于 PVE
-- [x] `10` Win11 VM：已装机、已通过自建 KMS 激活（[docs/win11-kms-activation.md](docs/win11-kms-activation.md)）
-- [x] guest 驱动安装 + License 配置（`gridd.conf` + `FeatureType=2`），飞牛/Win11 均 `Licensed`
+- [x] `08` 挂载 vGPU：**飞牛OS + Win11 均已挂**，都用 `nvidia-64`（GRID P4-2Q，P4 的 Pascal 同规格族限制下唯一可行选择）
+- [x] `09` 飞牛OS VM：系统盘 + 数据盘（KIOXIA NVMe）PCIe 直通，飞牛数据完全独立于 PVE；guest 驱动 + License(`gridd.conf`+`FeatureType=2`) 已验证 `Licensed`
+- [x] `10` Win11 VM：已装机、自建 KMS 激活（[docs/win11-kms-activation.md](docs/win11-kms-activation.md)）；guest 驱动 + License 已验证 `NVIDIA RTX Virtual Workstation`
+- [ ] M920x SATA FPC 转接板：原理图/封装设计已完成（本地笔记，未入库），**尚未打样/焊接/上机测试**；FPC 侧线序待万用表实测
+- [ ] 存储盘现状：USB 硬盘盒（已关 UASP，稳定），作为 SATA 转接板完工前的过渡方案
+- [ ] 存储盘现状：USB 硬盘盒（已关 UASP，稳定），作为 SATA 转接板完工前的过渡方案
 
 ## 用法
 
@@ -116,11 +118,11 @@ vGPU host 驱动是 NVIDIA **专有**软件，无开源替代（nouveau 不支�
 - **Linux guest 必须配置 `/etc/nvidia/gridd.conf`**（`ServerAddress` + `FeatureType=2`），否则可能拿到不含计算能力的授权，表现为 `nvidia-smi --query-gpu=compute_mode` 显示 `Prohibited`。详见 [drivers/README.md](drivers/README.md)。
 - host 与 guest 驱动**必须同一版本**（不只是同分支，如都是 535.309.01）。
 
-### 完整闭环（已验证跑通）
+### 完整闭环（飞牛OS + Win11 均已验证跑通）
 
 ```text
 NVIDIA 评估账号 → 门户下 16.14 Linux KVM 包 → host .run(05) → guest 驱动 →
-07 自建 DLS 发 token → guest 配 gridd.conf → Licensed → 飞牛OS/Win11 GPU 加速可用
+07 自建 DLS 发 token → guest 配 gridd.conf → Licensed → GPU 加速可用
 ```
 
 ## ⚠️ 重要：行尾必须是 LF
