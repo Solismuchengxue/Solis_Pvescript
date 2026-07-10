@@ -70,6 +70,27 @@ sudo reboot
 nvidia-smi   # 应显示 GPU 信息（如 GRID P4-2Q）及驱动版本
 ```
 
+## Guest 驱动安装（Windows，以 Win11 验证过的流程为例）
+
+前置：guest 已挂载 vGPU（`08_vm_attach.sh`），且拿到与 host **同版本**的 guest 驱动（如 `539.72_grid_win10_win11_server2019_server2022_dch_64bit_international.exe`，535.309.01 对应的 Windows 包）。
+
+> ⚠️ **驱动没装、没验证能看到 GPU 之前，不要把 Win11 的显示适配器改成 `none`。** 这时候关掉 VirtIO/std 显示，vGPU 还出不了图，会导致连控制台都进不去。等驱动装好、确认能看到 P4 之后再考虑要不要关。
+
+**1. 启动 VM**
+```bash
+qm start <VMID>
+```
+
+**2. 把 guest 驱动传进 Win11** —— 飞牛已有 WebDAV，最简单是在 Win11 里直接用浏览器下载：
+```
+http://<飞牛IP>:5005/drivers/Guest_Drivers/539.72_grid_win10_win11_server2019_server2022_dch_64bit_international.exe
+```
+（WebDAV 若需账密，浏览器会弹窗要求输入）
+
+**3. Windows 里安装驱动**：双击运行，标准 NVIDIA 安装向导走完，**重启**。
+
+**4. 重启后确认能看到 GPU**：设备管理器 → 显示适配器，应能看到多出一个 NVIDIA 设备（此时可能还没 License，属正常）。
+
 ## License 闭环（无需买授权）
 
 guest 满速需 license。评估期内可用 NVIDIA 评估 license；**评估到期后、或干脆从一开始，就用本仓库 `07_dls.sh` 自建 fastapi-dls 发 token** 给 guest，即可持续 `Licensed`——连 NVIDIA 的 license server 都不用碰。
@@ -98,6 +119,21 @@ nvidia-smi --query-gpu=compute_mode --format=csv     # 应为 Default，非 Proh
 > ⚠️ **`gridd.conf` 这步不能省。** 缺失时 `nvidia-gridd` 不知道该请求哪种授权，guest 拿到的可能是不含计算能力的低档授权，表现为 `nvidia-smi --query-gpu=compute_mode` 显示 **`Prohibited`**（禁止创建 CUDA 上下文），飞牛相册/影视的"GPU 加速转码"等功能会报"启用GPU失败"。`FeatureType=2` = 请求图形+计算授权，配上 Q 系列 vGPU 类型（见下）即可正常使用。
 >
 > `compute_mode` 在 vGPU 环境下由 host 侧 profile 类型 + license 授权版本决定，**guest 内无法用 `nvidia-smi -c` 直接修改**，改 `gridd.conf` 重新申领 token 才是正确路径。
+
+**Windows guest 配置 License：**
+
+1. Win11 里打开浏览器，访问：
+   ```
+   https://<DLS_IP>:443/-/client-token
+   ```
+   下载 `.tok` 文件，放到：
+   ```
+   C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\
+   ```
+2. `services.msc` 找到 **NVIDIA Display Container LS**，重启该服务（或直接重启系统）。
+3. 验证：打开 **NVIDIA Control Panel** 看右下角授权状态，或系统托盘的 **NVIDIA Container** 通知会弹出授权详情。
+
+> ✅ **实测：Windows guest 不需要 Linux 那样的 `gridd.conf`/`FeatureType` 配置**，只要 token 放对位置、重启服务，就能直接拿到正确档位的授权（验证结果：`NVIDIA RTX Virtual Workstation`，与 host 请求的 vWS 档位一致）。这点上 Windows 比 Linux guest 省一步。
 
 ## 版本配套（重要）
 
