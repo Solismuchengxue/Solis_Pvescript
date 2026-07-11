@@ -16,7 +16,7 @@
 #   DRY_RUN=1               只预览不改动
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 MODE="${MODE:-vgpu}"
 PIN_KERNEL="${PIN_KERNEL:-1}"

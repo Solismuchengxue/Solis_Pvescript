@@ -1,8 +1,9 @@
 # shellcheck shell=bash
-# common.sh —— 公共函数库，供各模块 source
+# common.sh —— 公共函数库，供 scripts/ 下各模块 source
 #   用法（各脚本顶部）：
 #     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-#     source "${SCRIPT_DIR}/lib/common.sh"
+#     source "${SCRIPT_DIR}/common.sh"
+#   （setup.sh 在项目根目录，用 "${SCRIPT_DIR}/scripts/common.sh"）
 #
 # 约定：危险/可重复的操作统一走这里的 confirm / backup_once，
 #       保证幂等、可重跑、首次原始态被保留为 .orig

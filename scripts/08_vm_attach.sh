@@ -4,15 +4,15 @@
 #   PVE 会在 VM 启动时自动创建 mdev 实例、关机自动销毁。
 #
 # 用法：
-#   ./08_vm_attach.sh <VMID> [nvidia-XX]      # 位置参数
-#   VMID=101 MDEV_TYPE=nvidia-63 ./08_vm_attach.sh
+#   ./scripts/08_vm_attach.sh <VMID> [nvidia-XX]      # 位置参数
+#   VMID=101 MDEV_TYPE=nvidia-63 ./scripts/08_vm_attach.sh
 #   直接运行则进入交互式。
 #
 # 环境变量：
 #   HOSTPCI_INDEX=0    指定起始索引（默认0），若该索引被占用则自动递增。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 VMID="${1:-${VMID:-}}"
 MDEV_TYPE="${2:-${MDEV_TYPE:-}}"

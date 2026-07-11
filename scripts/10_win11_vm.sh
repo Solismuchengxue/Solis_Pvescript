@@ -19,7 +19,7 @@
 #   VIRTIO_ISO=            virtio-win ISO 路径（留空自动探测 virtio-win*.iso）
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 VMID="${VMID:-110}"
 VM_NAME="${VM_NAME:-win11}"

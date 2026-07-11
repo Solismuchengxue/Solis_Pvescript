@@ -12,7 +12,7 @@
 # 注：第二块 NVMe 与 USB 移动硬盘本脚本暂不处理（按需另加）。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 VG="${VG:-pve}"
 LOCAL_CONTENT="${LOCAL_CONTENT:-backup,iso,vztmpl,images,rootdir,snippets}"

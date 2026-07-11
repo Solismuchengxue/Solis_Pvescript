@@ -5,7 +5,7 @@
 #   3) 加载模块并用 nvidia-smi 验证
 #
 # 前置（重要）：
-#   · host 驱动 .run 需自备，放入 ./drivers/（见 drivers/README.md）。脚本不下载官方驱动。
+#   · host 驱动 .run 需自备，放入项目根目录的 drivers/（见 docs/vgpu-driver-guide.md）。脚本不下载官方驱动。
 #   · 必须先完成 04（黑名单 nouveau + IOMMU）并【已重启】。
 #   · vGPU 路径下【不要】把 P4 绑到 vfio-pci（否则驱动拿不到卡）。
 #
@@ -14,9 +14,9 @@
 #   DRIVER_DIR=./drivers
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
-DRIVER_DIR="${DRIVER_DIR:-${SCRIPT_DIR}/drivers}"
+DRIVER_DIR="${DRIVER_DIR:-${SCRIPT_DIR}/../drivers}"
 DRIVER_RUN="${DRIVER_RUN:-}"
 
 # ---- 前置环境检查 ----
@@ -43,7 +43,7 @@ locate_driver(){
     DRIVER_RUN="$(ls -1 "${DRIVER_DIR}"/*vgpu*kvm*.run 2>/dev/null | head -1 || true)"
   fi
   [[ -n "$DRIVER_RUN" && -f "$DRIVER_RUN" ]] || die \
-    "未找到 vGPU host 驱动 (.run)。请把 *-vgpu-kvm.run 放入 ${DRIVER_DIR}/ 或用 DRIVER_RUN= 指定（见 drivers/README.md）"
+    "未找到 vGPU host 驱动 (.run)。请把 *-vgpu-kvm.run 放入 ${DRIVER_DIR}/ 或用 DRIVER_RUN= 指定（见 docs/vgpu-driver-guide.md）"
   msg_ok "驱动文件：$DRIVER_RUN"
 }
 

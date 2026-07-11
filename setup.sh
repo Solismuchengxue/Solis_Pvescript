@@ -3,7 +3,7 @@
 #   逐项调用各模块脚本。建议按顺序执行，注意 04 之后需重启。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/scripts/common.sh"
 
 menu(){
 cat <<EOF
@@ -24,7 +24,7 @@ ${C_INFO}===================================${C_RESET}
 EOF
 }
 
-run(){ bash "${SCRIPT_DIR}/$1"; }
+run(){ bash "${SCRIPT_DIR}/scripts/$1"; }
 
 main(){
   need_root

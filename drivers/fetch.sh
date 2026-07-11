@@ -17,7 +17,7 @@
 #   SRC_SUBDIR    源端子目录(默认 Host_Drivers；若 NAS 上平铺存放，设为空 SRC_SUBDIR=)
 #
 # 注：本脚本走 WebDAV，路径由 NAS_URL 决定，无需关心飞牛底层文件系统路径。
-#     若改用 SSH 登录飞牛直接装 guest 驱动，飞牛的真实存储路径见 drivers/README.md。
+#     若改用 SSH 登录飞牛直接装 guest 驱动，飞牛的真实存储路径见 docs/vgpu-driver-guide.md。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

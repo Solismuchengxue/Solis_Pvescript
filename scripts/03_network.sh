@@ -15,7 +15,7 @@
 #   DRY_RUN=1          只打印将做的改动，不落盘、不重载（强烈建议首次先跑）
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 BRIDGE="${BRIDGE:-vmbr0}"
 DRY_RUN="${DRY_RUN:-0}"

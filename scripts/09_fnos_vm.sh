@@ -19,7 +19,7 @@
 #   PCI_ADDR=                  手动指定 PCI 地址（留空则从 STORAGE_DEV 自动探测）
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 VMID="${VMID:-100}"
 VM_NAME="${VM_NAME:-fnos}"

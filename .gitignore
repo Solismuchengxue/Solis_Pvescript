@@ -1,10 +1,12 @@
-# NVIDIA vGPU 驱动：体积大且涉及授权，勿入库（保留说明文件与拉取脚本）
+# NVIDIA vGPU 驱动：体积大且涉及授权，勿入库（保留拉取脚本）
 drivers/*
-!drivers/README.md
 !drivers/fetch.sh
 
 # 本地私有硬件设计笔记（未经实测验证的线序，不公开，避免他人照做损坏硬件）
 docs/m920x-sata-fpc-adapter.md
+
+# 开发日志：内部笔记/踩坑记录，只本地维护，不对外发布
+DEVLOG.md
 
 # DLS 本地证书/私钥（若 DLS_DIR 指向项目内时，避免泄露）
 cert/

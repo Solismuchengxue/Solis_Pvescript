@@ -9,7 +9,7 @@
 #       会在【VM 启动时自动创建 mdev、关机自动销毁】，故无需手动持久化 mdev。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 # ---- 确保 vGPU 服务运行 + 持久模式 ----
 ensure_services(){

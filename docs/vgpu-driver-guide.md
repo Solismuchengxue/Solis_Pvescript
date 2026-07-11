@@ -1,7 +1,9 @@
-# drivers/ —— NVIDIA vGPU 驱动管理
+# NVIDIA vGPU 驱动安装指南
 
 vGPU 全链路涉及三处驱动/授权：**PVE Host**、**飞牛OS(Linux Guest)**、**Win11(Windows Guest)**。
 本文档按这三块分别整理，直接跳到对应部分看即可。
+
+驱动本体存放在项目的 `drivers/` 目录（体积大 + 授权限制，不入 git，见 `.gitignore`）。
 
 ## 关键约束速查（开始前先看）
 
@@ -28,24 +30,24 @@ vGPU 驱动无开源替代，合法免费途径是 NVIDIA 官方 **90 天评估*
 
 > ⚠️ 评估申请表通常要填**组织名 + 业务邮箱**，个人 Gmail 可能需审核或被拒——这是实际门槛。
 > ⚠️ **审核邮件不必等**：官方说 24~48 工作小时会发邮件，实测两周都没收到。提交申请后**直接用同一个企业邮箱去门户登录**，entitlement 往往已经生效，不用干等邮件。
-> 脚本**不联网下载官方驱动**，请自行准备文件。
+> 脚本**不联网下载官方驱动**，请自行准备文件，放入项目的 `drivers/` 目录（可用 `drivers/fetch.sh` 从自建 NAS 拉取）。
 
 ---
 
 ## PVE Host 侧
 
-**放什么**：本目录存放 NVIDIA vGPU **host** 驱动（注意是 host/KVM 版，不是普通显卡驱动），文件名务必含 `vgpu-kvm`：
+**放什么**：`drivers/` 目录存放 NVIDIA vGPU **host** 驱动（注意是 host/KVM 版，不是普通显卡驱动），文件名务必含 `vgpu-kvm`：
 ```
 drivers/NVIDIA-Linux-x86_64-<版本>-vgpu-kvm.run
 ```
 
-**安装**：`05_vgpu_driver.sh` 会自动在本目录查找并安装。
+**安装**：`scripts/05_vgpu_driver.sh` 会自动在 `drivers/` 目录查找并安装。
 
 ```bash
-# 默认自动找本目录下的 *vgpu*kvm*.run
-./05_vgpu_driver.sh
+# 默认自动找 drivers/ 下的 *vgpu*kvm*.run
+./scripts/05_vgpu_driver.sh
 # 或显式指定
-DRIVER_RUN=./drivers/NVIDIA-Linux-x86_64-535.230.02-vgpu-kvm.run ./05_vgpu_driver.sh
+DRIVER_RUN=./drivers/NVIDIA-Linux-x86_64-535.230.02-vgpu-kvm.run ./scripts/05_vgpu_driver.sh
 ```
 
 ---

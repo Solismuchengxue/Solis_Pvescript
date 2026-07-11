@@ -14,7 +14,7 @@
 #   IMAGE=collinwebdesigns/fastapi-dls:latest
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 DLS_PORT="${DLS_PORT:-443}"
 LEASE_DAYS="${LEASE_DAYS:-90}"
@@ -83,7 +83,7 @@ pull_image(){
   scp fastapi-dls.tar.gz root@${DLS_IP}:/tmp/
   # PVE 上：
   docker load < /tmp/fastapi-dls.tar.gz
-  ./07_dls.sh"
+  ./scripts/07_dls.sh"
 }
 
 run_dls(){

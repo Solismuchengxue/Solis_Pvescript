@@ -12,7 +12,7 @@
 #   ASSUME_YES=1         无人值守，跳过所有确认
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 # ===== 可调参数 =====
 MIRROR="${MIRROR:-ustc}"
