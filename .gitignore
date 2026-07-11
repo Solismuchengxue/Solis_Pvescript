@@ -8,6 +8,9 @@ docs/m920x-sata-fpc-adapter.md
 # 开发日志：内部笔记/踩坑记录，只本地维护，不对外发布
 DEVLOG.md
 
+# 工程方法论总结：跨项目复用的经验提炼，非项目文档，只本地留存
+PLAYBOOK.md
+
 # DLS 本地证书/私钥（若 DLS_DIR 指向项目内时，避免泄露）
 cert/
 *.pem
