@@ -97,6 +97,6 @@ main(){
   show_status
   echo
   msg_ok "===== 06 完成 ====="
-  msg_info "下一步：07_dls.sh 自建 License 服务器；08_vm_attach.sh 把 vGPU 挂给 VM"
+  msg_info "下一步：07_license.sh 查看官方 CLS/DLS 配置指引；08_vm_attach.sh 把 vGPU 挂给 VM"
 }
 main "$@"
