@@ -12,7 +12,7 @@ vGPU 全链路涉及三处驱动/授权：**PVE Host**、**飞牛OS(Linux Guest)
 | host 驱动 vs guest 驱动 | **必须同一 vGPU 分支且版本完全一致**（如都用 535.309.01） |
 | 驱动 vs 内核 | 535 在 6.8+ 内核多半需打补丁；故 `04_iommu.sh` 已 pin 内核到兼容版本 |
 | vGPU 类型 | 需要计算能力（CUDA/转码）选 **Q 系列**（如 `nvidia-64`），不要 B 系列（`nvidia-157`，vApps 用，无计算） |
-| License | guest 满速需 License → 见 `07_dls.sh`（自建 DLS），guest 需能访问 host 的 **443 端口** |
+| License | 使用有效 entitlement 创建 NVIDIA 官方 CLS/DLS，并从门户或官方 DLS 生成 Client Configuration Token |
 
 ## 驱动获取（90 天评估，合法免费）
 
@@ -95,29 +95,23 @@ nvidia-smi   # 应显示 GPU 信息（如 GRID P4-2Q）及驱动版本
 
 ### 3. 配置 License
 
-`07_dls.sh` 跑完会打印完整配置指引（含下面这步），也可手动照做：
+先使用有效 entitlement 在 [NVIDIA Licensing Portal](https://ui.licensing.nvidia.com/) 创建官方 CLS 或 DLS 服务实例，并生成 Client Configuration Token。下面只配置 Guest，不创建 License 服务：
 
 ```bash
-# 1) 告诉 nvidia-gridd 去哪要 license、要什么类型
-sudo tee /etc/nvidia/gridd.conf <<'EOF'
-ServerAddress=<你的 DLS_IP>
-FeatureType=2
-EOF
-
-# 2) 下载 client token
+# 1) 将从 NVIDIA Licensing Portal 或官方 DLS 获取的 Token 复制到默认目录
 sudo mkdir -p /etc/nvidia/ClientConfigToken
-sudo curl --insecure https://<DLS_IP>:443/-/client-token \
-  -o /etc/nvidia/ClientConfigToken/token_$(date '+%d-%m-%Y-%H-%M-%S').tok
+sudo cp <Client-Configuration-Token路径> /etc/nvidia/ClientConfigToken/
+sudo chmod 744 /etc/nvidia/ClientConfigToken/*.tok
 
-# 3) 重启服务、验证
+# 2) 按当前 NVIDIA Client Licensing 指南配置 /etc/nvidia/gridd.conf
+#    FeatureType 应与实际产品授权和 vGPU 类型匹配，不要复用来源不明的配置。
+
+# 3) 重启服务并验证
 sudo systemctl restart nvidia-gridd
-nvidia-smi -q | grep -i license                     # 应为 Licensed
-nvidia-smi --query-gpu=compute_mode --format=csv     # 应为 Default，非 Prohibited
+nvidia-smi -q | grep -i -A3 license
 ```
 
-> ⚠️ **`gridd.conf` 这步不能省。** 缺失时 `nvidia-gridd` 不知道该请求哪种授权，guest 拿到的可能是不含计算能力的低档授权，表现为 `nvidia-smi --query-gpu=compute_mode` 显示 **`Prohibited`**（禁止创建 CUDA 上下文），飞牛相册/影视的"GPU 加速转码"等功能会报"启用GPU失败"。`FeatureType=2` = 请求图形+计算授权，配上 Q 系列 vGPU 类型即可正常使用。
->
-> `compute_mode` 在 vGPU 环境下由 host 侧 profile 类型 + license 授权版本决定，**guest 内无法用 `nvidia-smi -c` 直接修改**，改 `gridd.conf` 重新申领 token 才是正确路径。
+> NVIDIA 不同 vGPU 软件版本的 `FeatureType` 和默认行为可能不同，请以对应版本的 [Client Licensing User Guide](https://docs.nvidia.com/vgpu/latest/grid-licensing-user-guide/) 为准。`compute_mode` 在 vGPU 环境下由 profile、驱动和授权共同决定，不能把来源不明的 Token 或配置当作许可证替代品。
 
 ---
 
@@ -148,15 +142,11 @@ http://<飞牛IP>:5005/drivers/Guest_Drivers/539.72_grid_win10_win11_server2019_
 
 ### 3. 配置 License
 
-1. Win11 里打开浏览器，访问：
-   ```
-   https://<DLS_IP>:443/-/client-token
-   ```
-   下载 `.tok` 文件，放到：
+1. 从 NVIDIA Licensing Portal 或官方 DLS 获取 Client Configuration Token，放到：
    ```
    C:\Program Files\NVIDIA Corporation\vGPU Licensing\ClientConfigToken\
    ```
 2. `services.msc` 找到 **NVIDIA Display Container LS**，重启该服务（或直接重启系统）。
 3. 验证：打开 **NVIDIA Control Panel** 看右下角授权状态，或系统托盘的 **NVIDIA Container** 通知会弹出授权详情。
 
-> ✅ **实测：Windows guest 不需要 Linux 那样的 `gridd.conf`/`FeatureType` 配置**，只要 token 放对位置、重启服务，就能直接拿到正确档位的授权（验证结果：`NVIDIA RTX Virtual Workstation`，与 host 请求的 vWS 档位一致）。这点上 Windows 比 Linux guest 省一步。
+> Windows vGPU Guest 通常会根据 vGPU 类型选择相应授权；具体行为仍以所安装驱动分支对应的 NVIDIA Client Licensing 文档为准。

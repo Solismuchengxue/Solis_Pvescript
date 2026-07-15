@@ -13,7 +13,7 @@ Proxmox VE 9.x 一键化配置脚本：基础环境 + 网络/IPv6 + 存储 + vGP
 | `scripts/04_iommu.sh` | IOMMU 引导参数、黑名单 nouveau、内核版本检测（不兼容自动降级并 pin） | ✅ |
 | `scripts/05_vgpu_driver.sh` | NVIDIA vGPU host 驱动（535/16.x，自备 .run）+DKMS+验证 | ✅ |
 | `scripts/06_vgpu_mdev.sh` | 拉起 vgpu 服务、ECC 检测关闭、列出 P4 的 mdev profile | ✅ |
-| `scripts/07_dls.sh` | fastapi-dls 自建 License 服务器（Docker）+ guest 配置指引 | ✅ |
+| `scripts/07_license.sh` | NVIDIA 官方 CLS/DLS 与 Guest Token 配置指引 | ✅ |
 | `scripts/08_vm_attach.sh` | 交互式给 VM 挂 vGPU（自动分配空闲 hostpci 索引，不覆盖已有设备） | ✅ |
 | `scripts/09_fnos_vm.sh` | 创建飞牛OS VM（系统盘 qcow2 + 数据盘 NVMe PCIe 直通） | ✅ |
 | `scripts/10_win11_vm.sh` | 创建 Win11 VM（UEFI+TPM2.0+VirtIO，待挂 vGPU） | ✅ |
@@ -58,7 +58,7 @@ cd ~/Solis_Pvescript && chmod +x setup.sh scripts/*.sh drivers/*.sh
 04 IOMMU / 引导 ───► ⚠️ 重启（内核版本不兼容会自动提示降级到 6.14.4 并 pin）
 05 安装 vGPU 驱动（重启后跑）───► 建议再次重启，确认 nvidia-smi 正常
 06 vGPU 服务 / ECC 关闭 ───► ⚠️ 若关闭了 ECC，脚本会退出，重启后重跑一遍 06
-07 自建 License 服务器
+07 配置官方 CLS/DLS License
 08 给 VM 挂 vGPU ───► qm start；guest 内装同分支驱动 + 配 License（详见 docs/vgpu-driver-guide.md）
 09 / 10 创建飞牛OS / Win11 VM（可在 01~04 之后随时穿插进行，不依赖 vGPU 驱动）
 ```
@@ -71,7 +71,7 @@ cd ~/Solis_Pvescript && chmod +x setup.sh scripts/*.sh drivers/*.sh
 ### 详细步骤参考
 
 - [docs/vgpu-driver-guide.md](docs/vgpu-driver-guide.md) —— vGPU 驱动获取、PVE Host / 飞牛OS(Linux Guest) / Win11(Guest) 三侧的安装与 License 配置完整指南（05/08 的详细展开）
-- [docs/win11-kms-activation.md](docs/win11-kms-activation.md) —— 飞牛自建 KMS（`teddysun/kms`）激活 Win11（10 之后的激活步骤）
+- [docs/win11-kms-activation.md](docs/win11-kms-activation.md) —— Win11 正版激活方式，以及拥有批量许可时连接组织官方 KMS 的客户端配置
 
 ## 4.备注
 
