@@ -2,12 +2,6 @@
 drivers/*
 !drivers/fetch.sh
 
-# 开发日志：内部笔记/踩坑记录，只本地维护，不对外发布
-DEVLOG.md
-
-# 工程方法论总结：跨项目复用的经验提炼，非项目文档，只本地留存
-PLAYBOOK.md
-
 # 本地证书/私钥（避免误提交敏感材料）
 cert/
 *.pem

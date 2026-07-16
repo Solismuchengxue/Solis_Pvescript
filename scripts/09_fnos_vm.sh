@@ -2,7 +2,7 @@
 # 09_fnos_vm.sh —— 创建飞牛OS (FnOS) VM
 #   系统盘：local 虚拟磁盘（默认 64G，qcow2，标记 SSD）
 #   存储盘：NVMe PCIe 直通（hostpci0）—— guest 看到真实 NVMe 控制器，
-#           数据格式由飞牛管理，拔盘可在任意机器直接读取
+#           数据格式由飞牛管理；脱离 PVE 后可在支持相应文件系统/阵列元数据的 Linux/FnOS 环境读取或恢复
 #   网络  ：vmbr0（SLAAC 自动获取 IPv4 + IPv6）
 #
 # 前置：飞牛 ISO 已放入 /var/lib/vz/template/iso/

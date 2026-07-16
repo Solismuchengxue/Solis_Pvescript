@@ -76,7 +76,7 @@ cd ~/Solis_Pvescript && chmod +x setup.sh scripts/*.sh drivers/*.sh
 ## 4.备注
 
 - 所有脚本 `set -euo pipefail`，开头做 root 与 PVE 版本检查。
-- **幂等**：可重复执行，不产生重复配置。
+- **重复执行**：配置类脚本尽量保持幂等；创建 VM 和存储变更等步骤会检测现状并中止或再次确认。
 - **自动备份**：被修改的系统文件首次会备份为 `*.orig`。
 - **危险操作确认**：删除存储、改 GRUB 等会先 `confirm`（`ASSUME_YES=1` 跳过）。
 - 面向 **PVE 9.x（Debian 13 Trixie）**，APT 源为 deb822 格式，与 8.x 不通用。

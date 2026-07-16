@@ -20,6 +20,8 @@ SUITE="${SUITE:-trixie}"                 # Debian 13 代号
 TIMEZONE="${TIMEZONE:-Asia/Shanghai}"
 DO_UPGRADE="${DO_UPGRADE:-0}"
 TEMP_MONITOR="${TEMP_MONITOR:-1}"
+TEMP_MONITOR_COMMIT="2790d3dde44cab402622be167926556c7916fd39"
+TEMP_MONITOR_SHA256="8c5a804f2338f068c80d2c4b4ebb2dda64d4f00a3b9d190d56e8e4eff1d80c1a"
 EXTRA_PKGS="${EXTRA_PKGS:-vim curl wget git htop tmux ca-certificates gnupg lsb-release}"
 
 case "$MIRROR" in
@@ -164,6 +166,7 @@ update_and_pkgs(){
 
 # ---- 7. 温度/频率/SMART 监控（PVE Web UI 摘要页显示）----
 #   来源：https://github.com/a904055262/PVE-manager-status（showtempcpufreq.sh）
+#   固定到已审查的 commit，并在执行前校验 SHA256，避免上游 main 变化后以 root 直接执行。
 #   已审查：数据采集全部走本地命令(sensors/smartctl/turbostat)，无远程执行；
 #   自带按版本号的备份(.bak)与 restore 机制，全自动执行无需交互。
 #   会给 smartctl/turbostat 加 SUID 位，并额外重启一次 pveproxy。
@@ -171,12 +174,19 @@ install_temp_monitor(){
   [[ "$TEMP_MONITOR" == "1" ]] || { msg_info "TEMP_MONITOR!=1，跳过温度监控安装"; return 0; }
   local cache_dir=/opt/pve-temp-monitor
   local cache_script="${cache_dir}/showtempcpufreq.sh"
-  local url="https://raw.githubusercontent.com/a904055262/PVE-manager-status/main/showtempcpufreq.sh"
+  local url="https://raw.githubusercontent.com/a904055262/PVE-manager-status/${TEMP_MONITOR_COMMIT}/showtempcpufreq.sh"
 
   msg_info "安装温度/频率/SMART 监控（patch Nodes.pm/pvemanagerlib.js）"
   mkdir -p "$cache_dir"
   if ! wget -q -O "$cache_script" "$url"; then
     msg_warn "监控脚本下载失败，跳过（不影响其余步骤）：$url"
+    return 0
+  fi
+  local actual_sha256
+  actual_sha256="$(sha256sum "$cache_script" | awk '{print $1}')"
+  if [[ "$actual_sha256" != "$TEMP_MONITOR_SHA256" ]]; then
+    rm -f "$cache_script"
+    msg_warn "监控脚本 SHA256 校验失败，已删除并跳过：$actual_sha256"
     return 0
   fi
   chmod +x "$cache_script"
