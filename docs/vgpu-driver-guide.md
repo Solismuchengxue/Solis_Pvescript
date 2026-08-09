@@ -11,7 +11,7 @@ vGPU 全链路涉及三处驱动/授权：**PVE Host**、**飞牛OS(Linux Guest)
 |----|------|
 | host 驱动 vs guest 驱动 | **必须同一 vGPU 分支且版本完全一致**（如都用 535.309.01） |
 | 驱动 vs 内核 | 535 在 6.8+ 内核多半需打补丁；故 `04_iommu.sh` 已 pin 内核到兼容版本 |
-| vGPU 类型 | 需要计算能力（CUDA/转码）选 **Q 系列**（如 `nvidia-64`），不要 B 系列（`nvidia-157`，vApps 用，无计算） |
+| vGPU 类型 | 需要计算能力（CUDA/转码）选 **Q 系列**；vGPU 16.14 的 P4-2Q=`nvidia-64`、P4-4Q=`nvidia-65`，不要把 B 系列当作计算 profile |
 | License | 使用有效 entitlement 创建 NVIDIA 官方 CLS/DLS，并从门户或官方 DLS 生成 Client Configuration Token |
 
 ## 驱动获取（90 天评估，合法免费）
@@ -49,6 +49,18 @@ drivers/NVIDIA-Linux-x86_64-<版本>-vgpu-kvm.run
 # 或显式指定
 DRIVER_RUN=./drivers/NVIDIA-Linux-x86_64-535.230.02-vgpu-kvm.run ./scripts/05_vgpu_driver.sh
 ```
+
+**新增或原位替换 vGPU**：`08_vm_attach.sh` 默认只给没有 vGPU 的 VM 新增一块；若目标 VM 已有 vGPU，脚本会停止，避免误加第二块。原位更换 profile 时必须先关闭目标 VM，并显式设置 `REPLACE_EXISTING=1`：
+
+```bash
+# 新增一块 P4-4Q
+VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
+
+# 把已停止 VM 的唯一既有 vGPU 原位替换为 P4-4Q
+REPLACE_EXISTING=1 VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
+```
+
+替换模式沿用原 `hostpci` 索引、PCI 地址和其他选项，只改 `mdev=`。它要求 VM 已停止且恰好存在一个既有 vGPU。vGPU 16.x 同一物理 GPU 上的 time-sliced vGPU 必须具有相同 framebuffer 大小；若仍有其他大小的活动 profile，目标类型会显示 `available_instances=0`，脚本会在修改前退出。
 
 ---
 
@@ -90,7 +102,7 @@ sudo ./NVIDIA-Linux-x86_64-535.309.01-grid.run
 ```bash
 sudo reboot
 # 重启后
-nvidia-smi   # 应显示 GPU 信息（如 GRID P4-2Q）及驱动版本
+nvidia-smi   # 应显示所分配的 GPU（如 GRID P4-4Q）、显存及驱动版本
 ```
 
 ### 3. 配置 License
@@ -112,6 +124,50 @@ nvidia-smi -q | grep -i -A3 license
 ```
 
 > NVIDIA 不同 vGPU 软件版本的 `FeatureType` 和默认行为可能不同，请以对应版本的 [Client Licensing User Guide](https://docs.nvidia.com/vgpu/latest/grid-licensing-user-guide/) 为准。`compute_mode` 在 vGPU 环境下由 profile、驱动和授权共同决定，不能把来源不明的 Token 或配置当作许可证替代品。
+
+### 4. 配置 NVIDIA Container Toolkit（Docker GPU）
+
+NVIDIA Container Toolkit 是安装在 Linux Guest 上的系统软件包和 Docker runtime 集成，不是长期运行的 Docker 容器。推荐使用 NVIDIA 官方 APT 仓库；若发行版或 NAS 应用中心也提供封装版本，应二选一，不要混装。
+
+下面以现场验证过的 `1.19.1-1` 为例。安装前先确认 `nvidia-smi`、License 和 `/dev/nvidia-uvm` 正常，并备份已有 `/etc/docker/daemon.json`：
+
+```bash
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+  | sudo gpg --dearmor --yes \
+      -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+curl -fsSL \
+  https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+  | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+  | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null
+
+sudo apt-get update
+NVIDIA_CONTAINER_TOOLKIT_VERSION=1.19.1-1
+sudo apt-get install -y \
+  "nvidia-container-toolkit=${NVIDIA_CONTAINER_TOOLKIT_VERSION}" \
+  "nvidia-container-toolkit-base=${NVIDIA_CONTAINER_TOOLKIT_VERSION}" \
+  "libnvidia-container-tools=${NVIDIA_CONTAINER_TOOLKIT_VERSION}" \
+  "libnvidia-container1=${NVIDIA_CONTAINER_TOOLKIT_VERSION}"
+
+if sudo test -f /etc/docker/daemon.json; then
+  sudo cp -a /etc/docker/daemon.json \
+    "/etc/docker/daemon.json.pre-nvidia-$(date +%Y%m%d-%H%M%S)"
+fi
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo dockerd --validate --config-file=/etc/docker/daemon.json
+sudo systemctl restart docker
+```
+
+上面的 `nvidia-ctk` 命令只注册 NVIDIA runtime，不把它设为默认；普通容器继续使用 `runc`。验证时应同时检查 runtime、原有容器和临时 CUDA 容器：
+
+```bash
+docker info --format 'runtimes={{json .Runtimes}} default={{.DefaultRuntime}}'
+docker ps
+docker run --rm --gpus all \
+  nvidia/cuda:12.2.2-base-ubuntu22.04 nvidia-smi -L
+```
+
+容器测试通过只证明 CUDA/NVIDIA runtime 基础链路可用。影视硬件转码还应以真实的非直放转码验证 NVENC；相册智能分类等功能应以实际推理任务和 GPU 使用记录验收。Guest 内核升级后还要再次确认 DKMS、`nvidia-smi`、UVM、Docker runtime 和容器 GPU；必要时为新内核重建 Guest 驱动。
 
 ---
 

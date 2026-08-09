@@ -16,7 +16,7 @@ ${C_INFO}========= Solis PVE Setup =========${C_RESET}
   5) vGPU 驱动   安装 NVIDIA host 驱动(.run)
   6) vGPU 服务   服务/mdev 类型查看
   7) License     官方 CLS/DLS 配置指引
-  8) 挂载 vGPU   给 VM 分配 vGPU
+  8) vGPU 分配   给 VM 新增/原位替换 vGPU
   9) 飞牛OS VM   创建 FnOS VM（NVMe PCIe 直通）
  10) Win11 VM    创建 Win11 VM（UEFI+TPM，待挂 vGPU）
   q) 退出
