@@ -10,6 +10,7 @@ It turns host initialization, networking, storage, IOMMU, vGPU, and FnOS / Windo
 ![Shell](https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnubash&logoColor=white)
 ![GPU](https://img.shields.io/badge/GPU-Tesla%20P4-76B900?logo=nvidia&logoColor=white)
 ![Scope](https://img.shields.io/badge/Scope-Hardware--specific-475569)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0F766E.svg)](LICENSE)
 
 [中文 README](README.md) · [Architecture](#architecture-and-integration-boundaries) · [Quick Start](#quick-start) · [Verification](#verification-status) · [Limitations](#current-limitations-and-non-goals)
 
@@ -39,7 +40,7 @@ This project organizes those cross-layer operations into a traceable engineering
 | Automation model | One interactive entry point plus 10 independently executable Bash modules |
 | External dependencies | Legally obtained NVIDIA drivers and licensing, plus FnOS / Windows / VirtIO ISOs |
 | Public repository boundary | Compliant scripts and documentation only; no drivers, tokens, certificates, private keys, or site credentials |
-| Current evidence level | Reviewable implementation and static Shell syntax checks; continuous CI and a complete public runtime evidence package are not yet available |
+| Current evidence level | A local offline validation script is provided; a complete public runtime evidence package is not yet available |
 
 ## Architecture and Integration Boundaries
 
@@ -89,6 +90,7 @@ flowchart TB
 | `08_vm_attach.sh` | Add a vGPU or replace the only existing profile on a stopped VM | Prevents an accidental second vGPU; checks capacity and VM state; verifies writes and attempts rollback |
 | `09_fnos_vm.sh` | Create an FnOS VM with a virtual system disk and NVMe PCIe data-disk passthrough | VMID and block-device checks, exclusive IOMMU-group validation, and formatting warnings |
 | `10_win11_vm.sh` | Create a UEFI, TPM 2.0, VirtIO Windows 11 VM | ISO and VMID preflight checks; separates installation, drivers, activation, and vGPU stages |
+| `scripts/validate_repo.sh` | Shell syntax, local Markdown links, public artifact boundaries, and repository-wide whitespace | Fully offline; never connects to or operates PVE, FnOS, VMs, containers, or hardware |
 
 `setup.sh` is an orchestration menu only. Every module can be run independently, allowing work to proceed in controlled stages based on the current site state.
 
@@ -143,7 +145,7 @@ Running `nvidia-smi` in a container proves only the baseline CUDA/runtime path. 
 - Verified backups. `02_storage.sh` deletes an LVM thin pool and must not be run without understanding its impact.
 - Legally obtained NVIDIA vGPU Host and Guest drivers and a valid license entitlement.
 - FnOS, Windows 11, and VirtIO ISOs when creating VMs.
-- Read the [vGPU Driver and Guest GPU Guide](docs/vgpu-driver-guide.md) first.
+- Read the [vGPU Driver and Guest GPU Guide](docs/vgpu-driver-guide.en.md) first.
 
 ### Run the Interactive Entry Point
 
@@ -208,24 +210,25 @@ Kernel and R535 compatibility is highly version-sensitive. `04_iommu.sh` current
 | Bash syntax | All 13 tracked `.sh` files passed `bash -n` on 2026-08-09 | Proves syntax can be parsed, not that execution succeeds on PVE |
 | Git whitespace | `git diff --check` passed on 2026-08-09 | Covers formatting of the current diff only |
 | README local links | Referenced local documentation exists | Does not verify external links or runtime behavior |
-| Automated tests / CI | Not currently provided | No false build or coverage status is presented |
-| ShellCheck | Not yet executed | The review environment did not have it installed |
+| Local repository validation | Provided | `scripts/validate_repo.sh` checks syntax, links, public artifact boundaries, and whitespace offline |
+| ShellCheck | Not yet included | The current checks do not claim lint coverage |
 | Runtime acceptance | Commands are documented by module and runbook | The repository does not yet contain one complete, sanitized, reproducible runtime evidence package |
 
 Run the local static checks with:
 
 ```bash
-git ls-files '*.sh' | xargs -n1 bash -n
-git diff --check
+bash scripts/validate_repo.sh
 ```
 
 Runtime acceptance should cover at least the target kernel, IOMMU, PCI driver ownership, `nvidia-smi`, mdev profiles and capacity, Guest licensing, NVIDIA/UVM device nodes, Docker runtime registration, and a real transcoding or inference workload.
 
 ## Documentation
 
-- [vGPU Driver & Guest GPU Guide](docs/vgpu-driver-guide.md): Host, FnOS, and Windows Guest drivers; licensing; profile replacement; and the Linux Guest NVIDIA Container Toolkit.
-- [Windows 11 Activation Guide](docs/win11-kms-activation.md): compliant Retail, OEM, MAK, organization KMS, and Evaluation paths.
-- [Repository Design Boundary](DESIGN.md): public/private repository and migration boundaries; this is not the technical architecture document.
+- [vGPU Driver & Guest GPU Guide](docs/vgpu-driver-guide.en.md): Host, FnOS, and Windows Guest drivers; licensing; profile replacement; and the Linux Guest NVIDIA Container Toolkit.
+- [Windows 11 Activation Guide](docs/win11-kms-activation.en.md): compliant Retail, OEM, MAK, organization KMS, and Evaluation paths.
+- [Repository Design Boundary](DESIGN_EN.md): public/private repository and migration boundaries; this is not the technical architecture document.
+- [Offline Repository Validation](scripts/validate_repo.sh): the side-effect-free static checks shared with CI.
+- [MIT License](LICENSE): reuse, modification, and distribution are permitted; the software is provided without warranty.
 
 ## Auditable Project Ownership
 
@@ -246,5 +249,5 @@ The current Git `HEAD` contains a single-author history. This README does not in
 - Driver, kernel, profile, and licensing versions must match; upgrades at any layer require renewed acceptance testing.
 - The Host driver workflow does not remove every kernel-patch or vendor-compatibility risk.
 - The project does not deploy or configure Kokoro-FastAPI, ComfyUI, or other business applications. The Toolkit provides only baseline container GPU access.
-- CI, automated regression tests, a public runtime evidence package, and a repository license declaration are not yet available.
+- Cloud CI is intentionally disabled; ShellCheck, module-level regression tests, and a complete public runtime evidence package are not yet available.
 - The project does not claim a production SLA and does not replace change approval, backups, maintenance windows, or site rollback plans.

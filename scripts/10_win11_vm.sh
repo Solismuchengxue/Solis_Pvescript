@@ -127,7 +127,7 @@ main(){
   echo "    qm set ${VMID} --boot 'order=scsi0'"
   echo "    qm reboot ${VMID}"
   echo
-  msg_info "  6. 激活：见 docs/win11-kms-activation.md（飞牛自建 KMS）"
+  msg_info "  6. 激活：见 docs/win11-kms-activation.md（正版授权与组织许可路径）"
   msg_info "  7. vGPU：驱动就绪后用 08_vm_attach.sh 挂 P4，再把显示切为 none"
 }
 main "$@"

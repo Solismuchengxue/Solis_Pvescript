@@ -1,5 +1,7 @@
 # Windows 11 激活与组织 KMS 客户端配置
 
+[English](win11-kms-activation.en.md)
+
 本项目不部署、不推荐、也不提供第三方 KMS 模拟服务或公共 KMS 地址。Windows 激活必须以用户实际拥有的许可证和授权范围为准。
 
 ## 1. 选择合法激活方式

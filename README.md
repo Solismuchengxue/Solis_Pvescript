@@ -10,6 +10,7 @@
 ![Shell](https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnubash&logoColor=white)
 ![GPU](https://img.shields.io/badge/GPU-Tesla%20P4-76B900?logo=nvidia&logoColor=white)
 ![Scope](https://img.shields.io/badge/Scope-Hardware--specific-475569)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0F766E.svg)](LICENSE)
 
 [English README](README_EN.md) · [架构](#架构与集成边界) · [快速开始](#快速开始) · [验证状态](#验证状态) · [限制](#当前限制与非目标)
 
@@ -39,7 +40,7 @@ PVE GPU 虚拟化不是单点配置问题：引导参数、IOMMU、内核版本�
 | 自动化形态 | 一个交互式入口 + 10 个可独立执行的 Bash 模块 |
 | 外部依赖 | 用户合法获取的 NVIDIA 驱动与 License、FnOS / Windows / VirtIO ISO |
 | 公开仓库边界 | 仅包含合规脚本与文档；不包含驱动、Token、证书、私钥或现场凭据 |
-| 当前证据等级 | 实现可审阅、Shell 静态语法已检查；持续 CI 和可公开的完整运行证据仍待补充 |
+| 当前证据等级 | 本地离线验证脚本已提供；可公开的完整运行证据仍待补充 |
 
 ## 架构与集成边界
 
@@ -89,6 +90,7 @@ flowchart TB
 | `08_vm_attach.sh` | 新增 vGPU，或为已停止 VM 原位替换唯一 profile | 防止误加第二块；容量检查；停机门禁；写后校验与失败回滚 |
 | `09_fnos_vm.sh` | 创建 FnOS VM，系统盘虚拟化、数据盘 NVMe PCIe 直通 | VMID 冲突和块设备检查；IOMMU 组独占验证；格式化风险提示 |
 | `10_win11_vm.sh` | 创建 UEFI、TPM 2.0、VirtIO Windows 11 VM | ISO / VMID 前检；分离安装、驱动、激活与 vGPU 步骤 |
+| `scripts/validate_repo.sh` | Shell 语法、Markdown 本地链接、公开资产边界和全仓空白检查 | 完全离线；不连接或操作 PVE、FnOS、VM、容器和硬件 |
 
 `setup.sh` 只负责编排菜单；每个模块都可单独执行，便于按现场状态分阶段推进和复核。
 
@@ -208,15 +210,14 @@ sudo REPLACE_EXISTING=1 VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
 | Bash 语法 | 13 个跟踪中的 `.sh` 文件通过 `bash -n`（2026-08-09） | 证明语法可解析，不证明 PVE 上运行成功 |
 | Git whitespace | `git diff --check` 通过（2026-08-09） | 仅覆盖当前差异格式 |
 | README 本地链接 | 2 个专题文档链接存在 | 不验证外部链接和运行内容 |
-| 自动化测试 / CI | 尚未提供 | README 不展示虚假的 build / coverage 状态 |
-| ShellCheck | 尚未执行 | 当前环境未安装，不据此声称 lint 通过 |
+| 本地仓库验证 | 已提供 | `scripts/validate_repo.sh` 离线检查语法、链接、公开资产边界和空白 |
+| ShellCheck | 尚未纳入 | 当前验证不据此声称 lint 通过 |
 | 运行验收 | 由各模块和专题文档给出检查命令 | 仓库尚未保存一套完整、脱敏、可复核的运行证据包 |
 
 本地静态复核可执行：
 
 ```bash
-git ls-files '*.sh' | xargs -n1 bash -n
-git diff --check
+bash scripts/validate_repo.sh
 ```
 
 运行时应至少复核：目标内核、IOMMU、PCI 驱动归属、`nvidia-smi`、mdev profile/容量、Guest License、NVIDIA/UVM 设备节点、Docker runtime，以及真实转码或推理任务。
@@ -226,6 +227,8 @@ git diff --check
 - [vGPU Driver & Guest GPU Guide](docs/vgpu-driver-guide.md)：Host / FnOS / Windows Guest 驱动、License、profile 替换和 Linux Guest NVIDIA Container Toolkit。
 - [Windows 11 Activation Guide](docs/win11-kms-activation.md)：Retail / OEM / MAK / 组织官方 KMS / Evaluation 等合规激活路径。
 - [Repository Design Boundary](DESIGN.md)：public/private 仓库与迁移边界；不是技术架构文档。
+- [Offline Repository Validation](scripts/validate_repo.sh)：与 CI 共用的无基础设施副作用静态检查。
+- [MIT License](LICENSE)：允许复用、修改和分发，但软件按原样提供且不附带担保。
 
 ## 公开仓库中可审阅的作者工作
 
@@ -246,5 +249,5 @@ git diff --check
 - 驱动、内核、profile 和 License 必须匹配；升级任一层后都需要重新验收。
 - Host 驱动安装流程并未消除所有内核补丁和供应商兼容性风险。
 - 不部署或配置 Kokoro-FastAPI、ComfyUI 等业务应用；Toolkit 只打通容器访问 GPU 的基础能力。
-- 尚无 CI、自动化回归测试、公开运行证据包和仓库许可证声明。
+- 未启用云端 CI；尚无 ShellCheck、模块行为回归测试和完整的公开运行证据包。
 - 本项目不承诺生产 SLA，也不替代变更审批、备份、维护窗口和现场回退计划。

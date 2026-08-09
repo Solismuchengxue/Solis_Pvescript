@@ -1,5 +1,7 @@
 # NVIDIA vGPU 驱动安装指南
 
+[English](vgpu-driver-guide.en.md)
+
 vGPU 全链路涉及三处驱动/授权：**PVE Host**、**飞牛OS(Linux Guest)**、**Win11(Windows Guest)**。
 本文档按这三块分别整理，直接跳到对应部分看即可。
 
@@ -10,7 +12,7 @@ vGPU 全链路涉及三处驱动/授权：**PVE Host**、**飞牛OS(Linux Guest)
 | 项 | 约束 |
 |----|------|
 | host 驱动 vs guest 驱动 | **必须同一 vGPU 分支且版本完全一致**（如都用 535.309.01） |
-| 驱动 vs 内核 | 535 在 6.8+ 内核多半需打补丁；故 `04_iommu.sh` 已 pin 内核到兼容版本 |
+| 驱动 vs 内核 | R535 与较新 PVE 内核的组合高度敏感；按 `04_iommu.sh` 的兼容内核策略执行，并以实际 DKMS 构建和重启后验证为准 |
 | vGPU 类型 | 需要计算能力（CUDA/转码）选 **Q 系列**；vGPU 16.14 的 P4-2Q=`nvidia-64`、P4-4Q=`nvidia-65`，不要把 B 系列当作计算 profile |
 | License | 使用有效 entitlement 创建 NVIDIA 官方 CLS/DLS，并从门户或官方 DLS 生成 Client Configuration Token |
 
@@ -28,8 +30,7 @@ vGPU 驱动无开源替代，合法免费途径是 NVIDIA 官方 **90 天评估*
    Guest_Drivers/<版本>_grid_win10_win11_...dch_64bit....exe  → 给 Win11 用
    ```
 
-> ⚠️ 评估申请表通常要填**组织名 + 业务邮箱**，个人 Gmail 可能需审核或被拒——这是实际门槛。
-> ⚠️ **审核邮件不必等**：官方说 24~48 工作小时会发邮件，实测两周都没收到。提交申请后**直接用同一个企业邮箱去门户登录**，entitlement 往往已经生效，不用干等邮件。
+> 评估申请可能要求组织信息和业务邮箱；审批状态、entitlement 和下载权限以 NVIDIA Licensing Portal 实际显示为准，不要仅依赖通知邮件判断。
 > 脚本**不联网下载官方驱动**，请自行准备文件，放入项目的 `drivers/` 目录（可用 `drivers/fetch.sh` 从自建 NAS 拉取）。
 
 ---
@@ -70,13 +71,15 @@ REPLACE_EXISTING=1 VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
 
 ### 1. 传驱动到飞牛
 
-两种方式：
+可使用以下任一受控传输方式：
 
-- **WebDAV**：走 `drivers/fetch.sh`，不用关心飞牛底层路径，脚本自动处理。
+- **WebDAV / 浏览器下载**：从本人有权访问的文件服务下载 Guest 驱动；不要在命令、文档或 Git 中写入账号密码。
 - **SSH 直连飞牛**：飞牛存储池的真实文件系统路径格式是 `/vol{存储池编号}/{用户ID}/`，例如：
   - 存储空间1 → `/vol1/1000/`（1000 = 飞牛默认管理员用户 UID）
   - 存储空间2 → `/vol2/1000/`
   - 约定驱动统一放 `/vol1/1000/drivers/`，SSH 登录飞牛后到这个路径下取 `.run` 安装。
+
+> `drivers/fetch.sh` 的职责是从私有 NAS 把 **Host 驱动**拉到本地仓库 `drivers/`，不是把 Guest 驱动传入 FnOS。
 
 ### 2. 安装驱动
 
@@ -184,11 +187,7 @@ docker run --rm --gpus all \
 qm start <VMID>
 ```
 
-飞牛已有 WebDAV，最简单是在 Win11 里直接用浏览器下载：
-```
-http://<飞牛IP>:5005/drivers/Guest_Drivers/539.72_grid_win10_win11_server2019_server2022_dch_64bit_international.exe
-```
-（WebDAV 若需账密，浏览器会弹窗要求输入）
+通过本人有权访问的 WebDAV、浏览器下载、SMB 或其他受控文件传输方式，把对应的 Windows Guest 驱动送入 VM。不要在公开文档或命令历史中写入文件服务地址、账号或密码。
 
 ### 2. 安装驱动
 
