@@ -180,7 +180,7 @@ docker run --rm --gpus all \
   nvidia/cuda:12.2.2-base-ubuntu22.04 nvidia-smi -L
 ```
 
-A passing CUDA container proves only the baseline CUDA/runtime path. Validate NVENC with a real non-direct-play transcode and validate inference features with an actual workload and GPU usage evidence. After a Guest kernel upgrade, recheck DKMS, `nvidia-smi`, UVM, licensing, Docker runtime registration, and container GPU access.
+A passing CUDA container proves only the baseline CUDA/runtime path. The user has confirmed a real FnOS non-direct-play transcode in the recorded environment, but that result does not extend to other versions or configurations. Validate inference features with an actual workload and GPU usage evidence. After a Guest kernel upgrade, recheck DKMS, `nvidia-smi`, UVM, licensing, Docker runtime registration, container GPU access, and real transcoding.
 
 ---
 

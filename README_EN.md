@@ -213,6 +213,7 @@ Kernel and R535 compatibility is highly version-sensitive. `04_iommu.sh` current
 | Local repository validation | Provided | `scripts/validate_repo.sh` checks syntax, links, public artifact boundaries, and whitespace offline |
 | ShellCheck | Not yet included | The current checks do not claim lint coverage |
 | Runtime acceptance | Commands are documented by module and runbook | The repository does not yet contain one complete, sanitized, reproducible runtime evidence package |
+| FnOS real non-direct-play transcode | **USER-VERIFIED** | The user confirmed acceptance with real media; this turn did not reconnect to the site or record media/codec parameters |
 
 Run the local static checks with:
 
@@ -220,7 +221,7 @@ Run the local static checks with:
 bash scripts/validate_repo.sh
 ```
 
-Runtime acceptance should cover at least the target kernel, IOMMU, PCI driver ownership, `nvidia-smi`, mdev profiles and capacity, Guest licensing, NVIDIA/UVM device nodes, Docker runtime registration, and a real transcoding or inference workload.
+The user has confirmed a real non-direct-play transcode in the recorded environment. After changes to versions, drivers, profiles, or application configuration, revalidate the target kernel, IOMMU, PCI driver ownership, `nvidia-smi`, mdev profiles and capacity, Guest licensing, NVIDIA/UVM device nodes, Docker runtime registration, and a real transcoding or inference workload.
 
 ## Documentation
 

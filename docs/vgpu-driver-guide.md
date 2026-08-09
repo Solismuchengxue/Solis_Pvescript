@@ -170,7 +170,7 @@ docker run --rm --gpus all \
   nvidia/cuda:12.2.2-base-ubuntu22.04 nvidia-smi -L
 ```
 
-容器测试通过只证明 CUDA/NVIDIA runtime 基础链路可用。影视硬件转码还应以真实的非直放转码验证 NVENC；相册智能分类等功能应以实际推理任务和 GPU 使用记录验收。Guest 内核升级后还要再次确认 DKMS、`nvidia-smi`、UVM、Docker runtime 和容器 GPU；必要时为新内核重建 Guest 驱动。
+容器测试通过只证明 CUDA/NVIDIA runtime 基础链路可用。当前记录环境已由用户确认飞牛影视真实非直放转码验收通过，但该结果不扩展到其他版本或配置；相册智能分类等功能仍应以实际推理任务和 GPU 使用记录验收。Guest 内核升级后还要再次确认 DKMS、`nvidia-smi`、UVM、Docker runtime、容器 GPU 和真实转码；必要时为新内核重建 Guest 驱动。
 
 ---
 

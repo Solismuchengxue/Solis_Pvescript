@@ -213,6 +213,7 @@ sudo REPLACE_EXISTING=1 VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
 | 本地仓库验证 | 已提供 | `scripts/validate_repo.sh` 离线检查语法、链接、公开资产边界和空白 |
 | ShellCheck | 尚未纳入 | 当前验证不据此声称 lint 通过 |
 | 运行验收 | 由各模块和专题文档给出检查命令 | 仓库尚未保存一套完整、脱敏、可复核的运行证据包 |
+| FnOS 真实非直放转码 | **USER-VERIFIED** | 用户确认真实媒体转码验收通过；本轮未重连现场，也未记录媒体或编码参数 |
 
 本地静态复核可执行：
 
@@ -220,7 +221,7 @@ sudo REPLACE_EXISTING=1 VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
 bash scripts/validate_repo.sh
 ```
 
-运行时应至少复核：目标内核、IOMMU、PCI 驱动归属、`nvidia-smi`、mdev profile/容量、Guest License、NVIDIA/UVM 设备节点、Docker runtime，以及真实转码或推理任务。
+当前记录环境已由用户确认真实非直放转码验收通过。版本、驱动、profile 或应用配置变化后，仍应重新复核目标内核、IOMMU、PCI 驱动归属、`nvidia-smi`、mdev profile/容量、Guest License、NVIDIA/UVM 设备节点、Docker runtime，以及真实转码或推理任务。
 
 ## 文档
 
