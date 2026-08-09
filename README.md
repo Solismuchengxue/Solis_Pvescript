@@ -11,7 +11,7 @@
 ![GPU](https://img.shields.io/badge/GPU-Tesla%20P4-76B900?logo=nvidia&logoColor=white)
 ![Scope](https://img.shields.io/badge/Scope-Hardware--specific-475569)
 
-[English Summary](#english-summary) · [架构](#架构与集成边界) · [快速开始](#快速开始) · [验证状态](#验证状态) · [限制](#当前限制与非目标)
+[English README](README_EN.md) · [架构](#架构与集成边界) · [快速开始](#快速开始) · [验证状态](#验证状态) · [限制](#当前限制与非目标)
 
 </div>
 
@@ -248,32 +248,3 @@ git diff --check
 - 不部署或配置 Kokoro-FastAPI、ComfyUI 等业务应用；Toolkit 只打通容器访问 GPU 的基础能力。
 - 尚无 CI、自动化回归测试、公开运行证据包和仓库许可证声明。
 - 本项目不承诺生产 SLA，也不替代变更审批、备份、维护窗口和现场回退计划。
-
----
-
-## English Summary
-
-**Solis PVE Script is a hardware-specific, modular automation toolkit for Proxmox VE 9.x and NVIDIA Tesla P4 virtualization.** It turns version-sensitive host, kernel, PCI/IOMMU, vGPU, guest, licensing, and container-runtime work into explicit operational stages.
-
-### What it integrates
-
-- Proxmox VE 9.x / Debian 13 host preparation
-- Network, IPv6, storage, kernel, IOMMU, and VFIO policy
-- NVIDIA vGPU Host driver, mdev profiles, ECC, and capacity checks
-- Safe vGPU attachment or in-place profile replacement
-- FnOS Linux and Windows 11 VM provisioning
-- Guest driver, official NVIDIA licensing, and Docker GPU runtime boundaries
-
-### Engineering focus
-
-- Preflight checks before destructive or version-sensitive changes
-- Dry-run support for network and IOMMU modules
-- Backups, explicit confirmation gates, idempotent markers, and rollback paths
-- Clear separation between vGPU and full-device passthrough
-- No bundled NVIDIA drivers, license tokens, certificates, or credentials
-
-### Verification boundary
-
-All 13 tracked shell scripts passed `bash -n` on 2026-08-09. This is static syntax evidence only. The repository does not currently claim continuous CI coverage, production readiness, a universal compatibility matrix, or a complete public runtime evidence package.
-
-See the [vGPU guide](docs/vgpu-driver-guide.md) for the detailed Host-to-Guest workflow and the [limitations](#当前限制与非目标) before running any module.
