@@ -56,8 +56,18 @@ check_repository_whitespace() {
   printf 'PASS repository whitespace\n'
 }
 
+check_offline_tests() {
+  local count=0 test_file
+  while IFS= read -r -d '' test_file; do
+    bash "$test_file"
+    ((count += 1))
+  done < <(find tests -maxdepth 1 -type f -name 'test_*.sh' -print0 2>/dev/null)
+  printf 'PASS offline tests (%d files)\n' "$count"
+}
+
 check_shell_syntax
 check_markdown_links
 check_public_boundary
 check_repository_whitespace
+check_offline_tests
 printf 'PASS repository validation\n'

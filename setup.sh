@@ -9,8 +9,9 @@ menu(){
 cat <<EOF
 
 ${C_INFO}========= Solis PVE Setup =========${C_RESET}
-  1) 基础配置    源/去弹窗/时区/NTP/基础包
-  2) 系统盘扩容  删 local-lvm 并入 root
+  0) 基础配置    源/去弹窗/时区/NTP/基础包
+  1) 系统盘扩容  删 local-lvm 并入 root
+  2) 硬件监控    CPU/NVMe/NVIDIA 摘要指标
   3) 网络与 IPv6 vmbr0 SLAAC / i226 确认
   4) IOMMU/引导  vGPU 准备 ${C_WARN}*执行后需重启*${C_RESET}
   5) vGPU 驱动   安装 NVIDIA host 驱动(.run)
@@ -24,7 +25,7 @@ ${C_INFO}===================================${C_RESET}
 EOF
 }
 
-run(){ bash "${SCRIPT_DIR}/scripts/$1"; }
+run(){ local script="$1"; shift; bash "${SCRIPT_DIR}/scripts/$script" "$@"; }
 
 main(){
   need_root
@@ -33,8 +34,9 @@ main(){
     menu
     read -r -p "选择> " c
     case "$c" in
-      1) run 01_base.sh ;;
-      2) run 02_storage.sh ;;
+      0) run 00_base.sh ;;
+      1) run 01_storage.sh ;;
+      2) run 02_pve_status_monitor.sh ;;
       3) run 03_network.sh ;;
       4) run 04_iommu.sh ;;
       5) run 05_vgpu_driver.sh ;;

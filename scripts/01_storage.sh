@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 02_storage.sh —— 系统盘存储调整（扩容四连）
+# 01_storage.sh —— 系统盘存储调整（扩容四连）
 #   删除默认 local-lvm，把其空间并入 local(root)，单盘空间统一可用：
 #     pvesm remove local-lvm
 #     lvremove -f pve/data
@@ -66,13 +66,13 @@ merge_locallvm_into_root(){
 main(){
   need_root
   need_pve9
-  msg_info "===== 02 系统盘存储调整开始 ====="
+  msg_info "===== 01 系统盘存储调整开始 ====="
   msg_warn "适用于【全新安装、尚无重要 VM/CT】；会销毁 local-lvm 数据"
   echo;  show_state;  echo
   confirm "继续：删 local-lvm → 删 ${VG}/data → 扩容 ${VG}/root → 放开 local content?" || die "已取消"
   merge_locallvm_into_root
   echo
-  msg_ok "===== 02 完成，结果如下 ====="
+  msg_ok "===== 01 完成，结果如下 ====="
   show_state
   msg_info "第二块 NVMe / USB 移动硬盘本次未处理，需要时再加存储模块"
 }

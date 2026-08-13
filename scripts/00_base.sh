@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 01_base.sh —— PVE 9.x 安装后基础配置
+# 00_base.sh —— PVE 9.x 安装后基础配置
 #   - APT 源替换为国内镜像（deb822 格式，Debian 13 Trixie 底）
 #   - 禁用企业源、去订阅弹窗（升级后自动重打补丁）
 #   - 时区 / NTP 国内源 / 基础工具包
@@ -8,7 +8,6 @@
 # 常用环境变量：
 #   MIRROR=ustc|tuna     镜像站（默认 ustc）
 #   DO_UPGRADE=1         同时执行 apt full-upgrade（默认 0）
-#   TEMP_MONITOR=1       安装温度/频率/SMART 监控到 PVE Web UI（默认 1，设 0 跳过）
 #   ASSUME_YES=1         无人值守，跳过所有确认
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,9 +18,6 @@ MIRROR="${MIRROR:-ustc}"
 SUITE="${SUITE:-trixie}"                 # Debian 13 代号
 TIMEZONE="${TIMEZONE:-Asia/Shanghai}"
 DO_UPGRADE="${DO_UPGRADE:-0}"
-TEMP_MONITOR="${TEMP_MONITOR:-1}"
-TEMP_MONITOR_COMMIT="2790d3dde44cab402622be167926556c7916fd39"
-TEMP_MONITOR_SHA256="8c5a804f2338f068c80d2c4b4ebb2dda64d4f00a3b9d190d56e8e4eff1d80c1a"
 EXTRA_PKGS="${EXTRA_PKGS:-vim curl wget git htop tmux ca-certificates gnupg lsb-release}"
 
 case "$MIRROR" in
@@ -164,49 +160,18 @@ update_and_pkgs(){
   msg_ok "基础包安装完成"
 }
 
-# ---- 7. 温度/频率/SMART 监控（PVE Web UI 摘要页显示）----
-#   来源：https://github.com/a904055262/PVE-manager-status（showtempcpufreq.sh）
-#   固定到已审查的 commit，并在执行前校验 SHA256，避免上游 main 变化后以 root 直接执行。
-#   已审查：数据采集全部走本地命令(sensors/smartctl/turbostat)，无远程执行；
-#   自带按版本号的备份(.bak)与 restore 机制，全自动执行无需交互。
-#   会给 smartctl/turbostat 加 SUID 位，并额外重启一次 pveproxy。
-install_temp_monitor(){
-  [[ "$TEMP_MONITOR" == "1" ]] || { msg_info "TEMP_MONITOR!=1，跳过温度监控安装"; return 0; }
-  local cache_dir=/opt/pve-temp-monitor
-  local cache_script="${cache_dir}/showtempcpufreq.sh"
-  local url="https://raw.githubusercontent.com/a904055262/PVE-manager-status/${TEMP_MONITOR_COMMIT}/showtempcpufreq.sh"
-
-  msg_info "安装温度/频率/SMART 监控（patch Nodes.pm/pvemanagerlib.js）"
-  mkdir -p "$cache_dir"
-  if ! wget -q -O "$cache_script" "$url"; then
-    msg_warn "监控脚本下载失败，跳过（不影响其余步骤）：$url"
-    return 0
-  fi
-  local actual_sha256
-  actual_sha256="$(sha256sum "$cache_script" | awk '{print $1}')"
-  if [[ "$actual_sha256" != "$TEMP_MONITOR_SHA256" ]]; then
-    rm -f "$cache_script"
-    msg_warn "监控脚本 SHA256 校验失败，已删除并跳过：$actual_sha256"
-    return 0
-  fi
-  chmod +x "$cache_script"
-  "$cache_script" && msg_ok "温度监控已启用（PVE Web UI → 节点 → 摘要 可查看）" \
-    || msg_warn "温度监控脚本执行失败，可手动重试：$cache_script"
-}
-
 main(){
   need_root
   need_pve9
-  msg_info "===== 01 基础配置开始 ====="
-  confirm "将替换 APT 源 / 去订阅弹窗 / 配时区+NTP / 装基础包 / 温度监控，继续?" || die "已取消"
+  msg_info "===== 00 基础配置开始 ====="
+  confirm "将替换 APT 源 / 去订阅弹窗 / 配时区+NTP / 装基础包，继续?" || die "已取消"
   setup_sources
   remove_subscription_nag
   setup_timezone
   setup_ntp
   update_and_pkgs
-  install_temp_monitor
   setup_locale
-  msg_ok "===== 01 基础配置完成 ====="
+  msg_ok "===== 00 基础配置完成 ====="
   msg_warn "升级内核前请先完成 04/05（IOMMU 与 vGPU 驱动）并 pin 内核，避免驱动被新内核搞挂"
   msg_info "重启 pveproxy（浏览器控制台会短暂断线，刷新页面即可）..."
   systemctl --no-block restart pveproxy.service 2>/dev/null || true

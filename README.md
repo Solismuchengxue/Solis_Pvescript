@@ -50,11 +50,13 @@ flowchart TB
 
     subgraph Host["Proxmox VE Host"]
         Base["Base system\nAPT · NTP · packages"]
+        Monitor["Hardware monitoring\nCPU · NVMe · NVIDIA GPU"]
         NetStore["Network & storage\nSLAAC · LVM"]
         Kernel["Kernel & IOMMU\nboot params · VFIO policy"]
         Driver["NVIDIA vGPU Host driver\nDKMS · services · ECC"]
         Mdev["mdev profiles\ncapacity & conflict checks"]
         Entry --> Base
+        Entry --> Monitor
         Entry --> NetStore
         Entry --> Kernel
         Kernel --> Driver --> Mdev
@@ -80,8 +82,9 @@ flowchart TB
 
 | 模块 | 工程能力 | 关键保护 |
 |---|---|---|
-| `01_base.sh` | deb822 APT 源、订阅提示、时区/NTP、基础包、可选温度监控 | 配置备份；第三方监控脚本固定提交并校验 SHA-256 |
-| `02_storage.sh` | 删除 `local-lvm`、扩展根卷、调整 `local` 内容类型 | 多次确认；已完成状态可重复检测；明确仅适合已备份的新装环境 |
+| `00_base.sh` | deb822 APT 源、订阅提示、时区/NTP 和基础包 | 配置备份；不耦合硬件监控 |
+| `01_storage.sh` | 删除 `local-lvm`、扩展根卷、调整 `local` 内容类型 | 多次确认；已完成状态可重复检测；明确仅适合已备份的新装环境 |
+| `02_pve_status_monitor.sh` | 交互安装 PVE 摘要页 CPU 温度/固件温区/平均频率、Host NVMe SMART 与 NVIDIA GPU 指标 | 重复安装幂等；独立依赖安装、人工确认、精确 SMART 权限、布局同步、版本化安装前基线和失败自动回滚 |
 | `03_network.sh` | `vmbr0` IPv6 SLAAC / `accept_ra=2` | `DRY_RUN`、配置备份、网卡探测、控制台兜底提示 |
 | `04_iommu.sh` | Intel IOMMU、引导刷新、vGPU / passthrough 模式、兼容内核 pin | `DRY_RUN`、模式互斥、bootloader 探测、备份与确认 |
 | `05_vgpu_driver.sh` | 用户自备 NVIDIA vGPU Host 驱动、DKMS 与基础验证 | nouveau / `vfio-pci` 冲突检查、内核/headers 前检 |
@@ -99,8 +102,8 @@ flowchart TB
 ### 1. PVE Host 准备
 
 ```text
-基础环境 → 存储布局 → 网络/IPv6 → IOMMU 与内核策略
-                                └─ 重启并确认目标内核/IOMMU
+基础环境 → 存储布局 → 摘要硬件监控 → 网络/IPv6 → IOMMU 与内核策略
+                                               └─ 重启并确认目标内核/IOMMU
 ```
 
 ### 2. 选择 GPU 路径
@@ -142,7 +145,7 @@ Host driver ready
 ### 前置条件
 
 - PVE 9.x Host，并具备 root 权限和本地/带外控制台兜底。
-- 已备份重要配置与数据；`02_storage.sh` 会删除 LVM thin pool，不能在不理解影响时执行。
+- 已备份重要配置与数据；`01_storage.sh` 会删除 LVM thin pool，不能在不理解影响时执行。
 - 合法获取的 NVIDIA vGPU Host / Guest 驱动与有效 License entitlement。
 - 创建 VM 时所需的 FnOS、Windows 11 和 VirtIO ISO。
 - 先阅读 [vGPU 驱动与 Guest GPU 指南](docs/vgpu-driver-guide.md)。
@@ -178,7 +181,6 @@ sudo REPLACE_EXISTING=1 VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
 |---|---:|---|
 | `MIRROR` | `ustc` | `ustc` / `tuna` / `official` APT 源 |
 | `DO_UPGRADE` | `0` | 设为 `1` 时执行 `apt full-upgrade` |
-| `TEMP_MONITOR` | `1` | 是否安装经过固定提交与摘要校验的温度监控脚本 |
 | `ASSUME_YES` | `0` | 跳过通用确认；高风险环境不建议使用 |
 | `DRY_RUN` | `0` | `03`、`04` 中预览而不落盘 |
 | `MODE` | `vgpu` | `04` 中选择 `vgpu` 或 `passthrough` |
@@ -226,6 +228,7 @@ bash scripts/validate_repo.sh
 ## 文档
 
 - [vGPU Driver & Guest GPU Guide](docs/vgpu-driver-guide.md)：Host / FnOS / Windows Guest 驱动、License、profile 替换和 Linux Guest NVIDIA Container Toolkit。
+- [PVE Status Monitor](docs/pve-status-monitor.md)：传感器字段解释、直通 NVMe 边界、GPU 指标及交互式幂等安装方式。
 - [Windows 11 Activation Guide](docs/win11-kms-activation.md)：Retail / OEM / MAK / 组织官方 KMS / Evaluation 等合规激活路径。
 - [Repository Design Boundary](DESIGN.md)：public/private 仓库与迁移边界；不是技术架构文档。
 - [Offline Repository Validation](scripts/validate_repo.sh)：与 CI 共用的无基础设施副作用静态检查。
@@ -246,7 +249,7 @@ bash scripts/validate_repo.sh
 ## 当前限制与非目标
 
 - 项目针对特定 PVE、Tesla P4、网络和存储拓扑，不是跨平台通用安装器。
-- `02_storage.sh` 具有数据破坏性，只适用于已理解布局并完成备份的环境。
+- `01_storage.sh` 具有数据破坏性，只适用于已理解布局并完成备份的环境。
 - 驱动、内核、profile 和 License 必须匹配；升级任一层后都需要重新验收。
 - Host 驱动安装流程并未消除所有内核补丁和供应商兼容性风险。
 - 不部署或配置 Kokoro-FastAPI、ComfyUI 等业务应用；Toolkit 只打通容器访问 GPU 的基础能力。

@@ -50,11 +50,13 @@ flowchart TB
 
     subgraph Host["Proxmox VE Host"]
         Base["Base system\nAPT · NTP · packages"]
+        Monitor["Hardware monitoring\nCPU · NVMe · NVIDIA GPU"]
         NetStore["Network & storage\nSLAAC · LVM"]
         Kernel["Kernel & IOMMU\nboot params · VFIO policy"]
         Driver["NVIDIA vGPU Host driver\nDKMS · services · ECC"]
         Mdev["mdev profiles\ncapacity & conflict checks"]
         Entry --> Base
+        Entry --> Monitor
         Entry --> NetStore
         Entry --> Kernel
         Kernel --> Driver --> Mdev
@@ -80,8 +82,9 @@ flowchart TB
 
 | Module | Engineering capability | Primary safeguards |
 |---|---|---|
-| `01_base.sh` | deb822 APT sources, subscription notice handling, timezone/NTP, base packages, and optional temperature monitoring | Configuration backups; pinned third-party monitor commit and SHA-256 verification |
-| `02_storage.sh` | Remove `local-lvm`, extend the root volume, and change `local` content types | Multiple confirmations; completed-state detection; explicit fresh-install and backup warning |
+| `00_base.sh` | deb822 APT sources, subscription notice handling, timezone/NTP, and base packages | Configuration backups; no hardware-monitor coupling |
+| `01_storage.sh` | Remove `local-lvm`, extend the root volume, and change `local` content types | Multiple confirmations; completed-state detection; explicit fresh-install and backup warning |
+| `02_pve_status_monitor.sh` | Interactive installation of PVE summary CPU temperature/firmware zone/average frequency, Host NVMe SMART, and NVIDIA GPU metrics | Idempotent reruns, self-contained dependency installation, human confirmation, exact SMART privilege, layout synchronization, versioned pre-installation baseline, and automatic failure rollback |
 | `03_network.sh` | IPv6 SLAAC / `accept_ra=2` on `vmbr0` | `DRY_RUN`, configuration backup, NIC detection, and console fallback guidance |
 | `04_iommu.sh` | Intel IOMMU, boot refresh, vGPU / passthrough policy, and compatible-kernel pinning | `DRY_RUN`, mode separation, bootloader detection, backup, and confirmation |
 | `05_vgpu_driver.sh` | User-provided NVIDIA vGPU Host driver, DKMS, and baseline verification | nouveau / `vfio-pci` conflict checks and kernel/header preflight checks |
@@ -99,8 +102,8 @@ flowchart TB
 ### 1. Prepare the PVE Host
 
 ```text
-Base system → Storage layout → Network/IPv6 → IOMMU and kernel policy
-                                         └─ Reboot and verify kernel/IOMMU
+Base system → Storage layout → Summary hardware monitoring → Network/IPv6 → IOMMU and kernel policy
+                                                                      └─ Reboot and verify kernel/IOMMU
 ```
 
 ### 2. Select a GPU Path
@@ -142,7 +145,7 @@ Running `nvidia-smi` in a container proves only the baseline CUDA/runtime path. 
 ### Prerequisites
 
 - A PVE 9.x Host with root access and a local or out-of-band console fallback.
-- Verified backups. `02_storage.sh` deletes an LVM thin pool and must not be run without understanding its impact.
+- Verified backups. `01_storage.sh` deletes an LVM thin pool and must not be run without understanding its impact.
 - Legally obtained NVIDIA vGPU Host and Guest drivers and a valid license entitlement.
 - FnOS, Windows 11, and VirtIO ISOs when creating VMs.
 - Read the [vGPU Driver and Guest GPU Guide](docs/vgpu-driver-guide.en.md) first.
@@ -178,7 +181,6 @@ sudo REPLACE_EXISTING=1 VMID=101 MDEV_TYPE=nvidia-65 ./scripts/08_vm_attach.sh
 |---|---:|---|
 | `MIRROR` | `ustc` | Select `ustc`, `tuna`, or `official` APT sources |
 | `DO_UPGRADE` | `0` | Set to `1` to run `apt full-upgrade` |
-| `TEMP_MONITOR` | `1` | Install the temperature monitor pinned to a commit and checksum |
 | `ASSUME_YES` | `0` | Skip common confirmations; not recommended for high-risk environments |
 | `DRY_RUN` | `0` | Preview without writing in modules `03` and `04` |
 | `MODE` | `vgpu` | Choose `vgpu` or `passthrough` in module `04` |
@@ -226,6 +228,7 @@ The user has confirmed a real non-direct-play transcode in the recorded environm
 ## Documentation
 
 - [vGPU Driver & Guest GPU Guide](docs/vgpu-driver-guide.en.md): Host, FnOS, and Windows Guest drivers; licensing; profile replacement; and the Linux Guest NVIDIA Container Toolkit.
+- [PVE Status Monitor](docs/pve-status-monitor.en.md): sensor-field meanings, passthrough NVMe boundaries, GPU metrics, and interactive idempotent installation.
 - [Windows 11 Activation Guide](docs/win11-kms-activation.en.md): compliant Retail, OEM, MAK, organization KMS, and Evaluation paths.
 - [Repository Design Boundary](DESIGN_EN.md): public/private repository and migration boundaries; this is not the technical architecture document.
 - [Offline Repository Validation](scripts/validate_repo.sh): the side-effect-free static checks shared with CI.
@@ -246,7 +249,7 @@ The current Git `HEAD` contains a single-author history. This README does not in
 ## Current Limitations and Non-goals
 
 - The project targets a specific PVE, Tesla P4, network, and storage topology; it is not a cross-platform installer.
-- `02_storage.sh` is destructive and is appropriate only when the layout is understood and backups exist.
+- `01_storage.sh` is destructive and is appropriate only when the layout is understood and backups exist.
 - Driver, kernel, profile, and licensing versions must match; upgrades at any layer require renewed acceptance testing.
 - The Host driver workflow does not remove every kernel-patch or vendor-compatibility risk.
 - The project does not deploy or configure Kokoro-FastAPI, ComfyUI, or other business applications. The Toolkit provides only baseline container GPU access.
