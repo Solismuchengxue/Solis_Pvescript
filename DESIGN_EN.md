@@ -24,7 +24,9 @@ The outer `Solis_Pvescript/` directory only contains the repositories. It is not
 
 ## Maintenance Invariants
 
-- The formal project path is `F:\70_Infrastructure_and_Operations\Solis_Pvescript`.
+- Maintenance ended on 2026-11-01. This design is retained as historical architecture; no new development or deployment work is planned.
+
+- The formal project path is `F:\60_Infrastructure_and_Operations\Solis_Pvescript`.
 - Preserve the outer container and its `public/` and `private/` repositories.
 - Do not merge the repositories, initialize Git in the outer directory, rewrite history, or silently change a remote.
 - Delivery, maintenance, and migration checks must verify each repository's HEAD, branch, remote, status, and worktree independently.

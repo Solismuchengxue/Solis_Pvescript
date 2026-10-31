@@ -24,7 +24,9 @@ Solis_Pvescript/
 
 ## 当前维护不变量
 
-- 正式目标路径为 `F:\70_Infrastructure_and_Operations\Solis_Pvescript`。
+- 项目于2026-11-01停止维护；本设计保留为历史架构，不新增开发或部署工作。
+
+- 正式项目路径为 `F:\60_Infrastructure_and_Operations\Solis_Pvescript`。
 - 必须保留外层容器及其下的 `public/`、`private/` 两层结构。
 - 不得合并两个仓库，不得在外层重新初始化 Git，不得改写历史或修改 remote。
 - 交付、维护和迁移核对必须分别检查两个仓库的 HEAD、当前分支、remote、status 和 worktree。

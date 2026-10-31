@@ -16,6 +16,9 @@ It turns host initialization, networking, storage, IOMMU, vGPU, and FnOS / Windo
 
 </div>
 
+> [!NOTE]
+> **Maintenance ended on 2026-11-01.** This project is retired and will be retained on GitHub as a historical archive. The deployment design and verification scope below are historical; no further updates or operational maintenance are provided. Archival does not establish compatibility with newer systems.
+
 > [!IMPORTANT]
 > This is neither a general-purpose PVE installer nor a fully unattended “one-click” script. It targets an explicit hardware and software baseline and uses interactive modules, preflight checks, and human approval gates to reduce infrastructure change risk.
 
